@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="SAP NetWeaver Cloud Addon for Spring Roo - Setup" />
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <title>SAP NetWeaver Gateway Connectivity Addon for Spring Roo - Setup</title>
+	
+	<script type="text/javascript">
+
+	  var _gaq = _gaq || [];
+	  _gaq.push(['_setAccount', 'UA-36323146-1']);
+	  _gaq.push(['_trackPageview']);
+
+	  (function() {
+		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	  })();
+
+	</script>
+
+  </head>
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/sapnwcloudlabs/nwcloud-roo-gwaddon">View on GitHub</a>
+          <h1 id="project_title">SAP NetWeaver Gateway Connectivity Addon for Spring Roo</h1>
+          <h2 id="project_tagline"><a href="index.html">Intro</a> | <a href="tutorial.html">Tutorial</a> &gt; Setup | <a href="overview.html">Overview</a></h2>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+
+        <h2 id="installing-the-prerequisites-roo-and-maven">Installing the prerequisites - Roo and Maven</h2>
+
+        <p>A basic requirement to get started with our Roo addon, is a working installation of <a href="http://www.springsource.org/spring-roo">Roo</a> and <a href="http://maven.apache.org/">Maven</a>.</p>
+
+		<p>Please follow the steps mentioned in the <a href="http://sapnwcloudlabs.github.com/nwcloud-roo-addon/setup.html">SAP NetWeaver Cloud Addon setup</a>, in order to get Roo and Maven installed.</p>
+        
+        <h2 id="installing-the-roo-addon">Installing the Roo addon</h2>
+
+        <h3 id="download-and-extract-the-addon-package">Download and extract the addon package</h3>
+
+        <p>Download the ZIP archive of the addon package: <a href="nwcloud-roo-gwaddon-package.zip">nwcloud-roo-gwaddon-package.zip</a>.</p>
+
+        <p>Extract its contents to a folder of your choice. In the following this folder will be called <code>ROO_ADDONS</code>.</p>
+
+        <blockquote>
+          <p>Whenever in the following commands or instructions the term <code>ROO_ADDONS</code> is used, please replace the term by the fully qualified path to the directory, where you extracted the contents of the ZIP file.</p>
+        </blockquote>
+
+        <h3 id="install-to-local-maven-repository-and-roo">Install to Roo</h3>
+
+        <p>Open a commandline and change to the directory <code>ROO_ADDONS</code>. Once there, execute the following command to install the addon to Roo and set up properly the java application which downloads the metadata at design time.</p>
+
+        <p>If you are using Windows:</p>
+
+        <pre><code>install_gwaddon.bat</code></pre>
+
+        <p>If you are using Linux or Mac OS:</p>
+
+        <pre><code>chmod +x ./install_gwaddons.sh
+./install_gwaddons.sh</code></pre>
+
+        <h3 id="check-installation-in-roo">Check installation in Roo</h3>
+
+        <p>Start the Roo Shell and issue the following command to get the list of loaded OSGi bundles in Roo:</p>
+
+        <pre><code>osgi ps</code></pre>
+
+        <p>You should see the installed addon at the end of the appearing list, similar to this:</p>
+
+        <pre><code>...
+[  75] [Active     ] [    1] nwcloud-roo-gwaddon (1.0.0.RELEASE)
+...</code></pre>
+
+        <p>If you see a line like this, then the addon has been successfully installed to Roo.</p>
+
+        <p>If such a line did not show up in the list, then try to manually install the addon using the following command:</p>
+
+        <pre><code>osgi start --url file:///ROO_ADDONS/com.sap.research.connectivity.gw-1.0.0.RELEASE.jar</code></pre>
+
+        <p>Hint: If there are any spaces in the path <code>ROO_ADDONS</code> please replace each of them with <code>%20</code> in this command.</p>
+
+        <p>If you ever need to uninstall the addon, then this can be done by the following command on the Roo shell:</p>
+
+        <pre><code>osgi uninstall --bundleSymbolicName com.sap.research.connectivity.gw</code></pre>
+
+        <h3 id="enable-group-com.sap.research">Check Metadata Retriever Application</h3>
+
+		<p>Go to you user home directory (in Windows it should look something like <code>c:\Users\YourUser\</code>) and check if a file named <em>appToRetrieveOdataMetadata.jar</em> is there. If it is not there, simply copy it from the <code>ROO_ADDONS</code> folder.</p>
+        
+        <h2 id="and-now">And now?</h2>
+
+        <p>Everything should be set up now. If you need to do additional configurations, such as setting the proxy, please refer to the <a href="http://sapnwcloudlabs.github.com/nwcloud-roo-addon/setup.html">SAP NetWeaver Cloud Addon setup</a>.</p>
+		
+		<p>It's time to start the <a href="tutorial.html">tutorial</a>!</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">&copy; SAP AG, made available under Apache License 2.0</p>
+      </footer>
+    </div>
+
+  </body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="SAP NetWeaver Cloud Addon for Spring Roo - Tutorial" />
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <title>SAP NetWeaver Gateway Connectivity Addon for Spring Roo - Tutorial</title>
+	
+	<script type="text/javascript">
+
+	  var _gaq = _gaq || [];
+	  _gaq.push(['_setAccount', 'UA-36323146-1']);
+	  _gaq.push(['_trackPageview']);
+
+	  (function() {
+		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	  })();
+
+	</script>
+
+  </head>
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/sapnwcloudlabs/nwcloud-roo-gwaddon">View on GitHub</a>
+          <h1 id="project_title">SAP NetWeaver Gateway Connectivity Addon for Spring Roo</h1>
+          <h2 id="project_tagline"><a href="index.html">Intro</a> | Tutorial &gt; <a href="setup.html">Setup</a> | <a href="overview.html">Overview</a></h2>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+
+      	<h2 id="tutorial">Tutorial</h2>
+
+      	<p>The best way to learn about Roo and our addon is to try it out. To provide you some guidance in this process, we prepared the following tutorial. Following this tutorial, you will learn how to make use of the addon in order to create a Roo-generated application connected to a NetWeaver Gateway system.</p>
+
+      	<blockquote>
+			<p>In order to follow the tutorial, please make sure that you already have installed Roo as well as downloaded and installed our addon. Please refer to <a href="setup.html">Setting up Roo and addons</a> for instructions on how to do the initial setup.</p>
+			<p>We strongly recommend to pursue first the tutorial provided by the <a href="http://sapnwcloudlabs.github.com/nwcloud-roo-addon/">SAP Net Weaver Cloud Addon</a>.</p>      	  
+      	</blockquote>
+
+		
+      	<h2 id="get-your-hands-dirty-starting-the-tutorial">Get your hands dirty - starting the tutorial</h2>
+
+      	<p>What we will do in the following is to create a small web application which will read data from a NetWeaver Gateway service.</p>
+		
+		<p>For that, first we need such a service. For demonstration purposes, have a look at the freely available NetWeaver Gateway <a href="http://scn.sap.com/docs/DOC-31221">demo system</a> on <a href="http://scn.sap.com">SAP Community Network</a>. Let's choose the <em>flight demo service</em> for instance. You can view the consumption model exposed by this service from your browser, by going to this <a href="https://gw.esworkplace.sap.com/sap/opu/odata/IWBEP/RMTSAMPLEFLIGHT_2/?$format=xml">link</a> (the login credentials are mentioned on the above-specified SCN page). Remember that NetWeaver Gateway can be configured to expose  services through the <a href="http://www.odata.org/">OData</a> protocol, which we are going to use.</p>
+		
+		<p>To get started with our web application, we open the commandline and create a new, empty folder named <code>gwdemo</code>. We then move into this folder and start Roo. If you are using Windows, you need to execute the following commands:</p>
+		
+      	<pre><code>c:\&gt;mkdir gwdemo
+c:\&gt;cd gwdemo
+c:\gwdemo&gt;roo
+    ____  ____  ____
+   / __ \/ __ \/ __ \
+  / /_/ / / / / / / /
+ / _, _/ /_/ / /_/ /
+/_/ |_|\____/\____/    X.Y.Z.RELEASE [rev abcdef0]
+
+
+Welcome to Spring Roo. For assistance press TAB or type "hint" then hit ENTER.
+roo&gt;</code></pre>
+
+      	<h3 id="defining-the-data-model">Setting up the project</h3>
+		
+      	<p>Now that we have the Roo shell up and running, issue the following commands to do the initial setup of our web project:</p>
+
+      	<pre><code>project --topLevelPackage com.sap.research --projectName travelagency
+persistence setup --provider ECLIPSELINK --database HYPERSONIC_IN_MEMORY</code></pre>
+
+      	<p>The first command tells Roo to setup a project named <code>travelagency</code> having the top level package <code>com.sap.research</code> for our java classes.</p>
+		<p>The second command sets up the kind of persistency we want to use to store our data. The first parameter tells Roo to use <a href="http://www.eclipse.org/eclipselink/">Eclipse Link</a> as JPA provider. For compatibility reasons, in case you plan to to deploy later on your application to NW Cloud, we use Eclipse Link. The second parameter specifies that we want to use a <a href="http://hsqldb.org/">HSQLDB</a> that stores data just in memory. This is great for local testing, as we do not need to setup a database server.</p>
+		
+		<p>Ok, but why do we need to set up persistency? The idea was to use the NetWeaver Gateway service as data provider, right? Right. However, since Spring Roo’s generated applications rely on JPA persistency (any entity created in Spring Roo is actually a JPA-entity), one should issue the persistency setup commands before running any NetWeaver Gateway connectivity commands. <strong>No data is actually persisted!</strong> This is just a workaround for making use of Roo's capabilities.</p>
+		
+		<h3 id="defining-the-data-model">Setting up NetWeaver Gateway connectivity</h3>
+		
+		Now the real fun starts. Issue the following commands:
+		
+		<pre><code>gateway setup
+gateway define odata_endpoint --Name sampleFlight --URL https://gw.esworkplace.sap.com/sap/opu/odata/IWBEP/RMTSAMPLEFLIGHT_2/ --USER GW@ESW --PASSWORD ESW4GW --HTTP_PROXYHOST proxy --HTTP_PROXYPORT 8080 --CSRF_MODE standard --TIMEOUT_CALL 30
+</code></pre>
+
+		<p>Let's see what we did. The <code>gateway setup</code> command is the first command provided by our addon. It instructs Roo to add the relevant dependencies in the <em>pom.xml</em> file of our project, and a class that will handle connectivity to the NetWeaver Gateway services. If you are curious what's going on "under the hood", then open:
+		<ul>
+			<li>the <em>pom.xml</em> and search for <em>odata4j</em>. The found dependencies were added by our command.</li>
+			<li>the folder <code>src\main\java\com\sap\research\connectivity</code> and check the <em>ODataConnectivity.java</em> file.
+		</ul>
+		</p>
+
+		<p>The second command is a bit more complex, and basically it defines the connectivity parameters necessary to connect to the <em>flight demo service</em>. We can refer later on to this connection simply by the value entered for the <code>--Name</code> parameter, which in our case is "sampleFlight". We will call it a "namespace".</p>
+		<p>Ok, ok, but how is this actually working? Well, do you remember <a href="setup.html">setting up</a> the addon? There was a <code>.jar</code> file which needed to reside in the user's home directory. This <code>.jar</code> file is the star of the current step. It connects to the provided service and downloads metadata information in an XML file, which will represent the main point for configuration of entities later on.
+		
+		The parameters are self-explanatory, except perhaps the last two ones (which are not mandatory, but we have included them for exemplification):
+		<ul>
+		<li><code>--CSRF_MODE</code>. In order to be able to perform create or update operations, NetWeaver Gateway makes use of <a href="http://en.wikipedia.org/wiki/Cross-site_request_forgery">CSRF</a>. The allowed values are "standard" and "compatibility", depending on the configuration of the NetWeaver Gateway service to which we connect to. If not specified, "standard" is used.</li>		
+		<li><code>--TIMEOUT_CALL</code>. This parameter represents the time in seconds for allowing the auxiliary <code>.jar</code> to run. By default, the value is 30.</li>
+		</ul>
+		</p>
+		
+		<p>I think you got by now what our code is generating, but if you can't help yourself, just have a look in the 	<code>src\main\java\com\sap\research\connectivity</code> folder and check the <em>sampleFlight_metadata.xml</em> and <em>sampleFlight.java</em> files.</p>
+		
+      	<h3 id="defining-the-data-model">Defining a connected entity</h3>
+
+      	<p>Boy, are we done setting up stuff? Yep. Let's play a bit with tab-completion. Issue the following and then press TAB.</p> 
+		<pre><code>gateway entity</code></pre>
+
+		<p>Two options should be available, <code>--namespace</code> and <code>--remoteEntitySet</code>. Choose the first one and then press TAB once again. Since there is only one namespace defined, it will automatically be completed, so you should get something like:</p>
+		<pre><code>gateway entity --namespace sampleFlight</code></pre>
+		
+		<p>Now, choose the next option and press TAB. Your Roo shell should have issued something like:</p>
+		
+		<pre><code>roo> gateway entity --namespace sampleFlight --remoteEntitySet
+
+BookingCollection        CarrierCollection        FlightCollection         NextMonthFlights         NotificationCollection
+SubscriptionCollection   TravelAgencies           TravelAgencyCollection
+
+roo> gateway entity --namespace sampleFlight --remoteEntitySet</code></pre>
+		
+		<p>These are all the entity sets exposed by the specified NetWeaver Gateway service. Choose "TravelAgencies". In the end, the entire command should look like:</p>
+		
+		<pre><code>gateway entity --namespace sampleFlight --remoteEntitySet TravelAgencies</code></pre>
+		
+		<p>There is one more option, but it is not mandatory. This option called <code>--import_all</code>, lets you specify whether all the fields contained within the selected entity set should be imported. By default is "true", but if you set it to "false", then only the keys will be imported. In this case you will have to import the rest of the fields later on. If you want to leave it on "true", then press ENTER and skip the next section of the tutorial. You can directly <a href="#creating-the-web-ui">create the UI</a>. Otherwise, set the command as follows and keep on reading:</p>
+		
+		<pre><code>gateway entity --namespace sampleFlight --remoteEntitySet TravelAgencies --import_all false</code></pre>
+		
+		<p>What our command does, is to create a java class, a Roo-entity, which contains the methods necessary for CRUD operations. You can check it out by going to the <code>src\main\java\com\sap\research\domain</code> folder and opening the <em>TravelAgencies.java</em> file.</p>
+		
+		
+		<h3 id="defining-the-data-model">Adding fields</h3>
+		
+		<p>If you have specified <code>--import_all false</code>, then keep on reading, as we must manually import the fields. Otherwise, you can skip this section.</p>
+		<p>Enjoyed playing with tab-completion? Let's do some more. Type the following and press TAB.</p>
+		
+		<pre><code>gateway field</code></pre>
+		
+		<p>There are two options available, <code>--entityClass</code> and <code>--fieldName</code>. It is of uttermost importance to initially specify the <code>--entityClass</code> option, which represents the entity for which we intend to import the field. After you do that, you guessed it, press TAB once again. You should get:</p>
+
+		<pre><code>gateway field --entityClass TravelAgencies</code></pre>
+   
+		<p>The option was autocompleted, as there is only one entity available. Now choose the second option and press TAB. The Roo shell should look something like:</p>
+		
+		<pre><code>roo> gateway field --entityClass TravelAgencies --fieldName
+
+City                Country             LanguageCode        LocalCurrencyCode   MimeType            Name                POBox
+PostalCode          Region              Street              TelephoneNumber     URL
+
+roo> gateway field --entityClass TravelAgencies --fieldName</code></pre>
+		
+		<p>What you see here are all the fields that can be imported within the selected entity. Select one of them, say <code>City</code>, then press ENTER. If you have an informative line in the Roo shell saying that the file <em>TravelAgencies.java</em> was updated, then the field was successfully imported. You can do the same with the rest of the fields, or only with the ones that you want.</p>
+		
+		<blockquote>
+			<p>Please be sure to check the configuration of the NetWeaver Gateway before deciding to import only a limited set of fields. There might be the case that some fields are required, either by the implemented business logic, or by the underlying backend, or by the Gateway itself.</p>
+		</blockquote>
+		
+		<p>In the end you should have issued these commands:</p>
+		
+		<pre><code>gateway field --entityClass TravelAgencies --fieldName City
+gateway field --entityClass TravelAgencies --fieldName Country
+gateway field --entityClass TravelAgencies --fieldName LanguageCode
+gateway field --entityClass TravelAgencies --fieldName LocalCurrencyCode
+gateway field --entityClass TravelAgencies --fieldName MimeType
+gateway field --entityClass TravelAgencies --fieldName Name
+gateway field --entityClass TravelAgencies --fieldName POBox
+gateway field --entityClass TravelAgencies --fieldName PostalCode
+gateway field --entityClass TravelAgencies --fieldName Region
+gateway field --entityClass TravelAgencies --fieldName Street
+gateway field --entityClass TravelAgencies --fieldName TelephoneNumber
+gateway field --entityClass TravelAgencies --fieldName URL</code></pre>
+
+		<p>You may want to have a look again at the <em>TravelAgencies.java</em> file found in the <code>src\main\java\com\sap\research\domain</code> folder.</p>
+		
+		<p>Anyway, we are done with our addon-specific commands, the rest will be handled by native Roo commands.</p>
+   
+   
+       	<h3 id="creating-the-web-ui">Creating the web UI</h3>
+
+      	<p>Let's instruct Roo to create a web UI for us. We do this, by issuing just two commands on the Roo shell:</p>
+
+      	<pre><code>web mvc setup
+web mvc scaffold --class ~.web.TravelAgenciesController --backingType ~.domain.TravelAgencies</code></pre>
+
+      	<p>The first command configures our project to use the <a href="http://static.springsource.org/spring/docs/3.1.x/spring-framework-reference/html/mvc.html">Spring MVC</a> framework as a base for the web UI. The second command creates the controller (which is the visual interface of the CRUD operations) for the entity that we have defined.</p>
+
+      	<p>That’s it! We have created our web application using Roo and may now exit the Roo shell using the <code>exit</code> command. This brings us back to the commandline.</p>
+
+      	<h3 id="compile-and-start-locally">Compile and start locally</h3>
+
+      	<p>Now it’s time to compile and run our created web application. As Roo creates standard Maven projects, we can now use Maven to compile our app, package it to a WAR file, download and start a <a href="http://tomcat.apache.org/">Tomcat</a> application server for testing, and deploy our WAR to the Tomcat. And we can do all this with just one command on the commandline:</p>
+
+      	<pre><code>mvn package tomcat:run</code></pre>
+
+      	<p>As soon as the Tomcat application server is up and running you should see the following line on the commandline:</p>
+
+      	<pre><code>INFO: Starting Coyote HTTP/1.1 on http-8080</code></pre>
+
+      	<p>To access your web application, open your favorite web browser and go to the following URL:</p>
+
+      	<pre><code>http://localhost:8080/travelagency</code></pre>
+
+      	<p>You should now see the travel agency web application:</p>
+
+      	<p><img src="images/travelagencies-app-spring-mvc-ui.png" alt="Screenshot of generated travelagency web application" title="Screenshot of generated travel agency web application" style="max-width: 809px;max-height: 285px;display: block;margin: 0 auto;text-align: center;"/></p>
+
+      	<p>Feel free to experiment a bit with the application, e.g. by browsing the records. You may like to check that those same records are present when accessing the <a href="https://gw.esworkplace.sap.com/sap/opu/odata/IWBEP/RMTSAMPLEFLIGHT_2/TravelAgencyCollection">travel agency entity set</a> from the flight demo NetWeaver Gateway service.</p>
+
+      	<blockquote>
+			<p>The free flight demo system does not allow write operations. You will not get any error, but nothing will be committed.</p>
+		</blockquote>
+
+		
+		
+      	<h2 id="congratulations">Congratulations</h2>
+
+      	<p>That’s it!</p>
+
+      	<p>You have just created your first web application connected to a NetWeaver Gateway system using Roo in just a few minutes!</p>
+
+      	<p>What you could do now:</p>
+
+      	<ul>
+			<li>Use the <a href="http://sapnwcloudlabs.github.com/nwcloud-roo-addon/">SAP Net Weaver Cloud Addon</a> to deploy your application on the Net Weaver Cloud. While doing so, please mind the fact that you must change <em>https</em> with <em>http</em> in the <em>SampleFlight.java</em> class from the <code>src\main\java\com\sap\research\connectivity</code> folder. This is due to a current limitation of the Net Weaver Cloud, for which we are expecting a fix.
+      		<li>Import the Maven project into an IDE like Eclipse or STS and start modifying or extending it.</li>
+      		<li>Create a mobile app that uses the web application as a backend by pushing/pulling data to/from it in JSON format using its REST interfaces.</li>
+      		<li>Go to the <a href="http://www.springsource.org/spring-roo">Roo website</a> and find out more about Roo.</li>
+      	</ul>
+
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">&copy; SAP AG, made available under Apache License 2.0</p>
+      </footer>
+    </div>
+
+  </body>
+</html>

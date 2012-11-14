@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="SAP NetWeaver Cloud Addon for Spring Roo - Overview" />
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <title>SAP NetWeaver Gateway Connectivity Addon for Spring Roo - Overview</title>
+	
+	<script type="text/javascript">
+
+	  var _gaq = _gaq || [];
+	  _gaq.push(['_setAccount', 'UA-36323146-1']);
+	  _gaq.push(['_trackPageview']);
+
+	  (function() {
+		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	  })();
+
+	</script>
+  </head>
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/sapnwcloudlabs/nwcloud-roo-gwaddon">View on GitHub</a>
+          <h1 id="project_title">SAP NetWeaver Gateway Connectivity Addon for Spring Roo</h1>
+          <h2 id="project_tagline"><a href="index.html">Intro</a> | <a href="tutorial.html">Tutorial</a> | Overview</h2>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+
+      	<h2 id="what-is-it-about">What is it about?</h2>
+
+      	<p>It's about creating Java-based web applications which are connected to NetWeaver Gateway systems - and all this very fast.</p>
+
+      	<h2 id="what-technology-is-used">What technology is used?</h2>
+
+      	<p><a href="http://www.springsource.org/spring-roo">Spring Roo</a> is used as a Rapid Application Development (RAD) tool, which creates web applications consisting of 100% pure Java code, managed as s standard Maven project.</p>
+
+      	<h2 id="what-kind-of-results-do-i-get">What kind of results do I get?</h2>
+
+      	<p>Using the addon provided by this project, Roo generates a web application containing (some) entities whose persistency is translated to NetWeaver Gateway services and a frontend providing a web UI for interfacing all the CRUD operations. You may use this as a starting point for a full blown web application, or leave it as-is and use it e.g. as cloud backend for a mobile app that connects to the automatically generated REST interfaces of the backend.</p>
+
+      	<h2 id="what-do-you-provide">What do you provide?</h2>
+
+      	<h3 id="software">Software</h3>
+
+      	<ul>
+      	<li><a href="https://github.com/sapnwcloudlabs/nwcloud-roo-gwaddon">Roo addon</a> to configure projects for NetWeaver Gateway connectivity</li>
+      	<li><a href="nwcloud-roo-gwaddon-package.zip">ZIP package</a> of plugin/addon above (precompiled binaries) + installation instructions</li>
+      	</ul>
+
+      	<h3 id="instructions">Instructions</h3>
+
+      	<ul>
+      	<li><a href="setup.html">Installation instructions</a></li>
+      	<li><a href="tutorial.html">Tutorial</a></li>
+      	</ul>
+
+      	<h2 id="what-additional-commands-the-pluginaddons-provide">What additional commands the addon provides?</h2>
+
+      	<pre><code>gateway setup
+gateway define odata_endpoint --Name --URL --USER --PASSWORD --CSRF_MODE --HTTP_PROXYHOST --HTTP_PROXYPORT --TIMEOUT_CALL
+gateway entity --namespace --remoteEntitySet --import_all
+gateway field --entityClass --fieldName</code></pre>
+
+      	<h2 id="who-provides-this">Who did this?</h2>
+
+      	<p>The plugin and addon were initially developed by the "Enterprise Platforms Fabric" unit of <a href="http://www.sap.com/research">SAP Research</a> in Darmstadt, Germany as a small proof-of-concept work. As such the work is copyrighted by <a href="http://www.sap.com">SAP AG</a>, which kindly allowed its release to Open Source under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache License 2.0</a>. The software is provided as-is, and SAP AG does not provide any support in any way for it.</p>
+
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">&copy; SAP AG, made available under Apache License 2.0</p>
+      </footer>
+    </div>
+
+  </body>
+</html>
