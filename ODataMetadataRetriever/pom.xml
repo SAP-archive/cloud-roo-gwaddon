@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+ 
+ Copyright 2012 SAP AG
+ 
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ 
+      http://www.apache.org/licenses/LICENSE-2.0
+ 
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.sap.research</groupId>
+    <artifactId>com.sap.research.connectivity.gw.metadataretriever</artifactId>
+    <version>1.0.0.RELEASE</version>
+    <name>gw-metadata-retriever</name>
+    <organization>
+        <name>SAP AG</name>
+        <url>http://www.sap.com/</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+    		<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    <description>SAP NetWeaver Gateway Metadata Retriever. Used together with SAP NetWeaver Gateway Connectivity Addon for Spring Roo.</description>
+    <url>https://github.com/sapnwcloudlabs/nwcloud-roo-gwaddon</url>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+	<dependencies>
+			<dependency>
+		    	<groupId>org.odata4j</groupId>
+		    	<artifactId>odata4j-core</artifactId>
+		    	<version>0.6.0</version>
+    		</dependency>
+   			<dependency>
+		    	<groupId>org.odata4j</groupId>
+		    	<artifactId>odata4j-jersey</artifactId>
+		    	<version>0.6.0</version>
+    		</dependency>
+		</dependencies>
+	<build>
+	  <plugins>
+		<plugin>
+		  <artifactId>maven-assembly-plugin</artifactId>
+		  <configuration>
+			<descriptorRefs>
+			  <descriptorRef>jar-with-dependencies</descriptorRef>
+			</descriptorRefs>
+			<archive>
+			  <manifest>
+				<mainClass>com.sap.research.connectivity.gw.MetadataRetriever</mainClass>
+			  </manifest>
+			</archive>
+		  </configuration>
+		  <executions>
+			<execution>
+			  <phase>package</phase>
+			  <goals>
+				<goal>single</goal>
+			  </goals>
+			</execution>
+		  </executions>
+		</plugin>
+	  </plugins>
+	</build>
+</project>	

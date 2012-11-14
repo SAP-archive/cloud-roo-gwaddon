@@ -1,0 +1,18 @@
+SAP NetWeaver Gateway Connectivity Addon for Spring Roo
+Copyright 2012 SAP AG.
+
+This project includes software developed at
+SAP AG (http://www.sap.com/).
+
+The following components are not part of the source code,
+but will be downloaded automatically on project build.
+
+OData connectivity support is provided by the Odata4j library package,
+which is open source software, written and copyrighted by John Spurlock. 
+The original software is available from
+  https://code.google.com/p/odata4j/
+
+Java parsing support is provided by the Javaparser library package,
+which is open source software, written and copyrighted by Julio Gesser. 
+The original software is available from
+  http://code.google.com/p/javaparser/
