@@ -27,7 +27,7 @@ Tutorial
 
 ### How to get started? ###
 
-We have prepared a tutorial that shows you how to install the addon and how to create a web application connected to a SAP NetWeaver Gateway service. The tutorial is available [here](http://tbd).
+We have prepared a tutorial that shows you how to install the addon and how to create a web application connected to a SAP NetWeaver Gateway service. The tutorial is available [here](http://sapnwcloudlabs.github.com/nwcloud-roo-gwaddon/tutorial.html).
 
 
 Building, installing and using the addon
@@ -82,7 +82,7 @@ After having built the OData Metadata Retriever application and the Roo addon, o
 
 1. Copy the runnable jar from the __ODataMetadataRetriever/target/__ folder to your user home directory. This directory varies on Windows and Linux, but it is essential that the jar will reside here. Be sure that you got the correct jar, which should be named _com.sap.research.connectivity.gw.metadataretriever-1.0.0.RELEASE-jar-with-dependencies.jar_. Rename the file to _appToRetrieveOdataMetadata.jar_.
 
-   Please Note: _This java application is used only at design time, for retrieving metadata from the NetWeaver Gateway systems you are connecting to. It does not interact in any way with the running applications that you are going to generate using Roo and this addon. The access to this application was tested on Windows and Mac OS._
+   Please Note: _This java application is used only at design time, for retrieving metadata from the NetWeaver Gateway systems you are connecting to. It does not interact in any way with the running applications that you are going to generate using Roo and this addon. The access to this application was tested on Windows, Linux and Mac OS._
 
 2. Go to the "target" subfolder of the __RooAddon__ folder, start a Roo shell and issue a command following this schema:
 
