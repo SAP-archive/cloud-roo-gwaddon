@@ -36,7 +36,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Logger;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -141,10 +140,13 @@ public class GWOperationsUtils {
 	      String returnString = "";
 	 
 	      try {
-	    	  final Process theProcess = Runtime.getRuntime().exec("java -jar " + System.getProperty("user.home") + SEPARATOR + "appToRetrieveOdataMetadata.jar " +
-													url + " " + user + " " + pass + " " + host + " " + port);
+	    	  String execArgs[] = new String[] {"java", "-jar", 
+	    			  System.getProperty("user.home") + SEPARATOR + "appToRetrieveOdataMetadata.jar",
+	    			  url, user, pass, host, port}; 
+	    	  
+	    	  final Process theProcess = Runtime.getRuntime().exec(execArgs);
 			
-            Callable<String> call = new Callable<String>() {
+	    	  Callable<String> call = new Callable<String>() {
                 public String call() throws Exception {
                 	String returnString = "";
                 	try {
