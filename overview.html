@@ -70,7 +70,11 @@
 gateway define odata_endpoint --Name --URL --USER --PASSWORD --CSRF_MODE --HTTP_PROXYHOST --HTTP_PROXYPORT --TIMEOUT_CALL
 gateway entity --namespace --remoteEntitySet --import_all
 gateway field --entityClass --fieldName</code></pre>
-
+		
+		<p>As per <em>Release 1.1.0</em>, the following new commands are available:</p>
+		      	<pre><code>gateway local field --entityClass --fieldName --fieldType
+gateway mvc adapt --entityClass</code></pre>
+		
       	<h2 id="who-provides-this">Who did this?</h2>
 
       	<p>The plugin and addon were initially developed by the "Enterprise Platforms Fabric" unit of <a href="http://www.sap.com/research">SAP Research</a> in Darmstadt, Germany as a small proof-of-concept work. As such the work is copyrighted by <a href="http://www.sap.com">SAP AG</a>, which kindly allowed its release to Open Source under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache License 2.0</a>. The software is provided as-is, and SAP AG does not provide any support in any way for it.</p>

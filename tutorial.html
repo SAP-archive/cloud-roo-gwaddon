@@ -135,7 +135,7 @@ roo> gateway entity --namespace sampleFlight --remoteEntitySet</code></pre>
 		<p>What our command does, is to create a java class, a Roo-entity, which contains the methods necessary for CRUD operations. You can check it out by going to the <code>src\main\java\com\sap\research\domain</code> folder and opening the <em>TravelAgencies.java</em> file.</p>
 		
 		
-		<h3 id="defining-the-data-model">Adding fields</h3>
+		<h3 id="adding-fields">Adding fields</h3>
 		
 		<p>If you have specified <code>--import_all false</code>, then keep on reading, as we must manually import the fields. Otherwise, you can skip this section.</p>
 		<p>Enjoyed playing with tab-completion? Let's do some more. Type the following and press TAB.</p>
@@ -180,7 +180,14 @@ gateway field --entityClass TravelAgencies --fieldName URL</code></pre>
 		
 		<p>Anyway, we are done with our addon-specific commands, the rest will be handled by native Roo commands.</p>
    
-   
+		<h3 id="adding-local-fields">Adding Local Fields</h3>
+		
+		<p>In case we need to have information stored only locally (for whatever reason), but within a connected entity, there is the possibility of adding such fields. Let's try adding a description field:</p>
+		
+		<pre><code>gateway local field --entityClass TravelAgencies --fieldName AgencyDescription --fieldType java.lang.String</code></pre>
+		
+		<p>There you have it! A local text field has been created within our Gateway connected entity. The value entered in this field will be saved only in the local persistence layer.</p>
+		
        	<h3 id="creating-the-web-ui">Creating the web UI</h3>
 
       	<p>Let's instruct Roo to create a web UI for us. We do this, by issuing just two commands on the Roo shell:</p>
@@ -190,6 +197,12 @@ web mvc scaffold --class ~.web.TravelAgenciesController --backingType ~.domain.T
 
       	<p>The first command configures our project to use the <a href="http://static.springsource.org/spring/docs/3.1.x/spring-framework-reference/html/mvc.html">Spring MVC</a> framework as a base for the web UI. The second command creates the controller (which is the visual interface of the CRUD operations) for the entity that we have defined.</p>
 
+		<h3 id="adapting-the-web-ui">Adapting the web UI</h3>
+		
+		<p>In case we have decided to add local fields in our entity (and only then), then we must issue the following command in order to adapt the web MVC wrapper to properly use it:</p>
+		
+		<pre><code>gateway mvc adapt --entityClass TravelAgencies</code></pre>
+		
       	<p>That’s it! We have created our web application using Roo and may now exit the Roo shell using the <code>exit</code> command. This brings us back to the commandline.</p>
 
       	<h3 id="compile-and-start-locally">Compile and start locally</h3>
