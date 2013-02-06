@@ -44,6 +44,8 @@ import org.w3c.dom.NodeList;
 import com.sap.research.connectivity.gw.parsers.JavaSourceField;
 import com.sap.research.connectivity.gw.parsers.JavaSourceFieldBuilder;
 import com.sap.research.connectivity.gw.parsers.JavaSourceFileEditor;
+import com.sap.research.connectivity.gw.parsers.JavaSourceMethod;
+import com.sap.research.connectivity.gw.parsers.JavaSourceMethodBuilder;
 import com.sap.research.connectivity.gw.parsers.MetadataXMLParser;
 
 /**
@@ -105,6 +107,20 @@ public class GwOperationsImpl extends GWOperationsUtils implements GwOperations 
 		return false;
 	}
 	
+	public boolean isCommandGWMVCAdaptCommandAvailable() throws IOException {
+		/*
+		 * We check first to see if there is a gateway entity available. If so, we check if there are any generated controllers.
+		 */
+	    boolean returnResults = false;
+		if (isCommandGWFieldAvailable() == true) {
+			SortedSet<FileDetails> files = fileManager.findMatchingAntPath(getSubPackagePath(web) + SEPARATOR + "*Controller.java");
+			if (!files.isEmpty())
+				returnResults = true;
+		}
+		
+	    return returnResults;
+	}
+    
     public void addODataConnectivity() {
    		addODataDependenciesToPom();
    		addOdataConnectivityClass();
@@ -221,7 +237,7 @@ public class GwOperationsImpl extends GWOperationsUtils implements GwOperations 
         typeManagementService.createOrUpdateTypeOnDisk(cidBuilder.build());
     }
     
-    public void addFieldsAndMethods(final String namespace, String remoteEntity, boolean importAll){
+    public void addFieldsAndMethods(final String namespace, String remoteEntity, boolean importAll) throws Exception{
     	
     //   Extract fields and keys from Metadata XML
 		 Map<String, String> fields = new HashMap<String, String>();
@@ -274,39 +290,70 @@ public class GwOperationsImpl extends GWOperationsUtils implements GwOperations 
          addGatewayFields(keysIncludingId, fields, entityClassFile); 
 
     //   Add Persistence Methods
-         // Send all the fields (keys plus fields)
+    // Send all the fields (keys plus fields)
          allFields.putAll(keys);
          allFields.putAll(fields);
          addPersistenceMethods(allFields, entityClassFile, remoteEntity, keys);
+         
          entityClassFile.makeFile();
+         //throw new Exception(entityClassFile.getFileContent());
    }
     
-   public void addFieldInGWClass(String localClassName, String fieldName) throws Exception {
-	   
+   public void modifyController(final String remoteEntity) throws Exception{
+	
+	   //  Get handler for File Editor to edit the entity file  
+	    String controllerEntityName = remoteEntity + "Controller";
+       	JavaSourceFileEditor controllerClassFile = getJavaFileEditor(web, controllerEntityName); 
+ 
+       	addControllerImports(controllerClassFile);
+       	
+	/*
+	 *  We need to overwrite the show method of the .aj file, as we need to pass the itemId to the model as URLEncoded 
+	 */
+		JavaSourceMethod showMethod = new JavaSourceMethodBuilder()
+											.methodName("show")
+											.methodPrefix("public")
+											.returnType("String")
+											.annotations("@RequestMapping(value = \"/{Id}\", produces = \"text/html\")")
+											.parameters(getControllerShowMethodParameters())
+											.methodBody(getControllerShowMethodBody(remoteEntity))
+											.build();
+		controllerClassFile.addMethod(showMethod);
+       	
+       	controllerClassFile.makeFile();
+   }
+    
+   public void addRemoteFieldInGWClass(String localClassName, String fieldName) throws Exception {
 	   //   Get handler for File Editor to edit (and search) the entity file  
-        JavaSourceFileEditor entityClassFile = getJavaFileEditor(domain, localClassName); 
+       JavaSourceFileEditor entityClassFile = getJavaFileEditor(domain, localClassName); 
 
-	   Map.Entry<String, String> fieldObj = null;
-       if (!entityClassFile.fieldExists(fieldName)) {
-    	   String nameSpace = GwUtils.getNamespaceFromClass(entityClassFile);
-    	   Map<String, String> fields = getFieldsOfRemoteEntity(localClassName, nameSpace);
-		
-    	   for(Map.Entry<String, String> field : fields.entrySet()){
-    		   if (field.getKey().equals(fieldName)) {
-    			   fieldObj = field;
-    			   break;
-    		   }
-    	   }
-       }
-       else {
-    	   throw new Error("Field \"" + fieldName + "\" already exists in java class file " + localClassName);
-       }
+	   Map.Entry<String, String> fieldObj = getValidatedField(localClassName, fieldName, entityClassFile);
        
        if (fieldObj == null)
-    	   throw new Error("The name \"" + fieldName + "\" is not a valid name. Please choose a name from the provided list.");
+    	   throw new Exception("The name \"" + fieldName + "\" is not a valid name. Please choose a name from the provided list.");
 
-       addFieldInGWJavaFile(entityClassFile, fieldObj);
-	   addFieldInPersistenceMethods(entityClassFile, fieldObj);
+       addRemoteFieldInGWJavaFile(entityClassFile, fieldObj);
+	   addRemoteFieldInPersistenceMethods(entityClassFile, fieldObj);
+	   
+       entityClassFile.makeFile();
+   }
+
+   
+   public void addLocalFieldInGWClass(String localClassName, String fieldName, JavaType fieldType) throws Exception {
+	//   Get handler for File Editor to edit (and search) the entity file  
+       JavaSourceFileEditor entityClassFile = getJavaFileEditor(domain, localClassName); 
+
+	   Map.Entry<String, String> fieldObj = getValidatedField(localClassName, fieldName, entityClassFile);
+       
+       if (fieldObj != null)
+    	   throw new Exception("The name \"" + fieldName + "\" is a valid name for a remote field. In order to reduce confusions, " +
+    	   		"please choose another name for your local field.");
+
+       String processedTypeName = fieldType.getNameIncludingTypeParameters();
+       processedTypeName = processedTypeName.substring(processedTypeName.lastIndexOf(".") + 1);
+       
+       addFieldInGWJavaFile(entityClassFile, fieldName, processedTypeName);
+	   addLocalFieldInPersistenceMethods(entityClassFile, fieldName, processedTypeName);
        entityClassFile.makeFile();
    }
 

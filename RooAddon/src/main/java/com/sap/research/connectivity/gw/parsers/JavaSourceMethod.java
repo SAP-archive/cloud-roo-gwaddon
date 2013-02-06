@@ -181,7 +181,7 @@ public class JavaSourceMethod {
 		String returnString = null;
 
 		if (!annotations.isEmpty()){
-			returnString = "\n\t" + annotations + methodPrefix + returnType + methodName + "(" + parameterString + ")" + 
+			returnString = "\n\t" + annotations + "\t" + methodPrefix + returnType + methodName + "(" + parameterString + ")" + 
 								  throwsDeclaration + "{\n" + methodBody + "}\n";
 		} else {
 			returnString = "\n\t" + methodPrefix + returnType + methodName + "(" + parameterString + ")" + 
