@@ -104,7 +104,7 @@ public class GwCommands implements CommandMarker { // All command types must imp
     }
     
     /**
-     * Check if connectivity setup command is available
+     * Check if gateway entity command is available
      */
     @CliAvailabilityIndicator("gateway entity") 
     public boolean isAddGwEntityCommandAvailable() {
@@ -113,9 +113,9 @@ public class GwCommands implements CommandMarker { // All command types must imp
     }
     
     /**
-     * Check if connectivity setup command is available
+     * Check if connectivity gateway field / gateway local field commands are available
      */
-    @CliAvailabilityIndicator("gateway field") 
+    @CliAvailabilityIndicator({"gateway field", "gateway local field"}) 
     public boolean isAddGwFieldCommandAvailable() {
     	//Check that there is a gateway entity available
         boolean returnResults = false;
@@ -127,6 +127,21 @@ public class GwCommands implements CommandMarker { // All command types must imp
 		}
         
         return returnResults;
+    }
+   
+    /**
+     * Check if gateway mvc adapt command is available
+     */
+    @CliAvailabilityIndicator("gateway mvc adapt") 
+    public boolean isGWMVCAdaptCommandAvailable() {
+    	boolean returnResults = false;
+    	try {
+    		returnResults = operations.isCommandGWMVCAdaptCommandAvailable();
+    	} catch (IOException e) {
+			log.severe("The \"gateway mvc adapt\" command is not available at the moment. Please check the attached error.");
+			e.printStackTrace();
+    	}
+    	return returnResults;
     }
     
     /**
@@ -193,21 +208,56 @@ public class GwCommands implements CommandMarker { // All command types must imp
     }
     
     /**
-     * Create a field related to a gateway connected entity
+     * Import a remote field from a gateway connected entity
      */
     @CliCommand(value = "gateway field", help="Imports a specific field from the specified remote gateway entity.")
     public void addGwField(
-    		//TODO: converter for class (only those classes containing a valid gw connection object should be listed)
     		@CliOption(key = "entityClass", mandatory = true, help = "Name of the linked entity", optionContext = "domain") final GwEntityClass localClassName,
-    		@CliOption(key = "fieldName", mandatory = true, help = "Field to be imported") final GwField fieldName
+    		@CliOption(key = "fieldName", mandatory = false, help = "Field to be imported") final GwField fieldName
     		) {
-
     	try { 
-    		operations.addFieldInGWClass(localClassName.getName(), fieldName.getName());
+    		operations.addRemoteFieldInGWClass(localClassName.getName(), fieldName.getName());
     	} catch (Exception e) {
     		log.severe(e.getMessage());
     		e.printStackTrace();
     	}
     }
+    
+    
+    /**
+     * Create a local field related to a gateway connected entity
+     */
+    @CliCommand(value = "gateway local field", help="Create a local field in an entity which is connected to the gateway. " +
+    		"The created field will be only available locally.")
+    public void addLocalGwField(
+    		@CliOption(key = "entityClass", mandatory = true, help = "Name of the linked entity", optionContext = "domain") final GwEntityClass localClassName,
+    		@CliOption(key = "fieldName", mandatory = true, help = "Field to be created") final String fieldName,
+    		@CliOption(key = "fieldType", mandatory = true, optionContext = "java-lang,java-date", help = "The type of the entity") final JavaType fieldType
+    		) {
+    	try { 
+    		operations.addLocalFieldInGWClass(localClassName.getName(), fieldName, fieldType);
+    	} catch (Exception e) {
+    		log.severe(e.getMessage());
+    		e.printStackTrace();
+    	}
+    }
+    
+    /**
+     * Adapt the controllers to gateway connected entity
+     */
+    @CliCommand(value = "gateway mvc adapt", help="It adapts the controllers of the GW connected entities in order to make all the CRUD operations work. " +
+    		"This command is needed ONLY for the entities having local fields mingled with remote ones.")
+    public void adaptMVC(
+    		@CliOption(key = "entityClass", mandatory = true, help = "Name of the linked entity", optionContext = "domain") final GwEntityClass localClassName
+    		) {
+    	try { 
+    		// Modify the controller (because we need to overwrite the show method)
+	     	operations.modifyController(localClassName.getName());
+    	} catch (Exception e) {
+    		log.severe(e.getMessage());
+    		e.printStackTrace();
+    	}
+    }
+       
     
 }

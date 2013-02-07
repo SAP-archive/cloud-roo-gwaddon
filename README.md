@@ -80,14 +80,14 @@ Alternatively, you could import the content of this folder as a java project in 
 
 After having built the OData Metadata Retriever application and the Roo addon, one must do the following:
 
-1. Copy the runnable jar from the __ODataMetadataRetriever/target/__ folder to your user home directory. This directory varies on Windows and Linux, but it is essential that the jar will reside here. Be sure that you got the correct jar, which should be named _com.sap.research.connectivity.gw.metadataretriever-1.0.0.RELEASE-jar-with-dependencies.jar_. Rename the file to _appToRetrieveOdataMetadata.jar_.
+1. Copy the runnable jar from the __ODataMetadataRetriever/target/__ folder to your user home directory. This directory varies on Windows and Linux, but it is essential that the jar will reside here. Be sure that you got the correct jar, which should be named _com.sap.research.connectivity.gw.metadataretriever-1.1.0.RELEASE-jar-with-dependencies.jar_. Rename the file to _appToRetrieveOdataMetadata.jar_.
 
    Please Note: _This java application is used only at design time, for retrieving metadata from the NetWeaver Gateway systems you are connecting to. It does not interact in any way with the running applications that you are going to generate using Roo and this addon. The access to this application was tested on Windows, Linux and Mac OS._
 
 2. Go to the "target" subfolder of the __RooAddon__ folder, start a Roo shell and issue a command following this schema:
 
 
-	roo> osgi start --url file:///&#60;path-to-project-dir&#62;/target/com.sap.research.connectivity.gw-1.0.0.RELEASE.jar
+	roo> osgi start --url file:///&#60;path-to-project-dir&#62;/target/com.sap.research.connectivity.gw-1.1.0.RELEASE.jar
 
         Check the installed addon bundle using:
 
@@ -95,7 +95,7 @@ After having built the OData Metadata Retriever application and the Roo addon, o
 
         You should see a line like the following appearing in the shown list:
 
-	[  75] [Active     ] [    1] nwcloud-roo-gwaddon (1.0.0.RELEASE)
+	[  75] [Active     ] [    1] nwcloud-roo-gwaddon (1.1.0.RELEASE)
 
         If you want to uninstall the addon, then you could do this using the following command:
 
@@ -146,6 +146,16 @@ Imports a field in the specified entity. This command provides greater refinemen
 *import_all* flag set to __false__ on the previous command.
 This command is available only after at least one NetWeaver Gateway entity has been imported.
 
+        gateway local field --entityClass  *<name of the entity where the local field should be created>
+                            --fieldName    *<name of the field to be created>
+                            --fieldType    *<type of the field to be created>
+
+Adds a field whose underlying store is local persistence. Even though it will appear as part of a linked Gateway entity, the values entered in this field will be kept only locally. This command is available only after at least one NetWeaver Gateway entity has been imported.
+
+        gateway mvc adapt --entityClass    *<name of the entity to be adapted>
+
+Adapts the mvc controller to handle properly local and remote fields. This command should be used only if the specified linked Gateway entity contains local fields. Otherwise it is not necessary. This command is available only after a *web scaffolding* command has been issued for at least one entity.
+
 
 ### What else do I need to know? ###
 
@@ -166,6 +176,7 @@ Let's try this one below, which is valid for the current version of the addon:
 - We provide support for composed keys.
 - When you define an entity, the keys are automatically imported, no need to specify them explicitly.
 - All NetWeaver Gateway simple types are supported for fields.
+- An imported NetWeaver Gateway entity can have both imported and independent (local) fields.
 - [CSRF](http://en.wikipedia.org/wiki/Cross-site_request_forgery) support. 
 
 
@@ -180,9 +191,7 @@ In the current version, the most important limitations are:
 - We do not process complex field types (such as records). These will be rendered as strings when imported.
 - Other field properties, such as length of visible name are not supported.
 - Relations with other entities (either JPA or NetWeaver Gateway) are not supported. 
-- An imported NetWeaver Gateway entity can only have imported fields.
 - No possibility of specifying read-only or hidden fields.
-
 
 Additional information
 ----------------------
@@ -195,3 +204,16 @@ This project is copyrighted by [SAP AG](http://www.sap.com/) and made available 
 ### Contributions ###
 
 Contributions to this project are very welcome, but can only be accepted if the contributions themselves are given to the project under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0.html). Contributions other than those given under Apache License 2.0 will be rejected.
+
+
+Version history
+---------------
+
+#### 1.1.0. RELEASE
+
+- Added support for local field within Gateway-linked entities (`gateway local field` and `gateway mvc adapt` commands added)
+- Bug Fixing
+
+#### 1.0.0. RELEASE
+
+- Initial release

@@ -85,9 +85,11 @@ public final class JavaSourceParserUtils {
 		String annotationTranslated = "";
 		if (annotations != null){
 			for (AnnotationExpr ann : annotations) {
-				annotationTranslated += ann.toString() + "\n";
+				annotationTranslated += ann.toString() + "\n\t";
 			}
 		}
+		if (annotationTranslated.endsWith("\n\t"))
+			annotationTranslated = annotationTranslated.substring(0, annotationTranslated.length()-2);
 		return annotationTranslated;
 	}
 
