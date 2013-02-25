@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.SortedSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -44,6 +45,7 @@ import org.apache.felix.scr.annotations.Reference;
 import org.springframework.roo.classpath.TypeLocationService;
 import org.springframework.roo.classpath.TypeManagementService;
 import org.springframework.roo.classpath.details.annotations.AnnotationMetadataBuilder;
+import org.springframework.roo.file.monitor.event.FileDetails;
 import org.springframework.roo.process.manager.FileManager;
 import org.springframework.roo.process.manager.MutableFile;
 import org.springframework.roo.project.Dependency;
@@ -537,7 +539,11 @@ public class GWOperationsUtils {
 		String smallRemoteEntity = StringUtils.lowerCase(remoteEntity);
 		String pluralRemoteEntity = GwUtils.getInflectorPlural(remoteEntity, Locale.ENGLISH);
 		
-		String returnString = "\t\taddDateTimeFormatPatterns(uiModel);\n";
+		String returnString = "";
+		
+		if (existsDateFieldInController(remoteEntity)) {
+			returnString += "\t\taddDateTimeFormatPatterns(uiModel);\n";
+		}
 		returnString += "\t\tuiModel.addAttribute(\"" + smallRemoteEntity + "\", " + remoteEntity + ".find" + remoteEntity + "(Id));\n";
 		returnString += generateURLEncodingCode("Id", "\t\t");
 		returnString += "\t\tuiModel.addAttribute(\"itemId\", " + ENCODED_KEY + ");\n";
@@ -948,6 +954,24 @@ public class GWOperationsUtils {
     	   throw new Exception("Field \"" + fieldName + "\" already exists in java class file " + localClassName);
        }
 	   return fieldObj;
-}
+	}
+	
+	private boolean existsDateFieldInController(String remoteEntity) {
+		SortedSet<FileDetails> files = fileManager.findMatchingAntPath(getSubPackagePath(web) + SEPARATOR + remoteEntity +"Controller_Roo_Controller*.aj");
+		for (FileDetails file : files) {
+			InputStream inputStream = fileManager.getInputStream(file.getCanonicalPath());
+			try {
+				if (IOUtils.toString(inputStream).contains(remoteEntity + "Controller.addDateTimeFormatPatterns(")) {
+					IOUtils.closeQuietly(inputStream);
+					return true;
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			IOUtils.closeQuietly(inputStream);
+		}
+		
+		return false;
+	}
 	
 }
