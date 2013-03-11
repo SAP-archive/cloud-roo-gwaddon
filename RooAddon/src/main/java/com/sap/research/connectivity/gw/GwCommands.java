@@ -24,6 +24,7 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.osgi.service.component.ComponentContext;
+import org.springframework.roo.classpath.operations.FieldCommands;
 import org.springframework.roo.model.JavaType;
 import org.springframework.roo.shell.CliAvailabilityIndicator;
 import org.springframework.roo.shell.CliCommand;
@@ -163,8 +164,8 @@ public class GwCommands implements CommandMarker { // All command types must imp
     		@CliOption(key = "PASSWORD", mandatory = true, help = "Password") String pass,
     		@CliOption(key = "CSRF_MODE", mandatory = false, unspecifiedDefaultValue = "standard", specifiedDefaultValue = "standard", 
 			help = "The Gateway Server Mode for CSRF. Default is standard. For compatibility mode, choose compatibility.") final String csrfMode,
-    		@CliOption(key = "HTTP_PROXYHOST", mandatory = false, help = "http.proxyhost") String http_proxyhost,
-    		@CliOption(key = "HTTP_PROXYPORT", mandatory = false, help = "http.proxyport") String http_proxyport,
+    		@CliOption(key = "HTTP_PROXYHOST", mandatory = false, help = "http.proxyhost", unspecifiedDefaultValue = "") String http_proxyhost,
+    		@CliOption(key = "HTTP_PROXYPORT", mandatory = false, help = "http.proxyport", unspecifiedDefaultValue = "") String http_proxyport,
     		@CliOption(key = "TIMEOUT_CALL", mandatory = false, unspecifiedDefaultValue = "30", specifiedDefaultValue = "30", 
     		help = "The timeout for retrieving the metadata in seconds. Default is 30.") int timeout
     		) {
@@ -184,6 +185,9 @@ public class GwCommands implements CommandMarker { // All command types must imp
     	} catch (Exception e) {
     		log.severe(e.getMessage());
     	}
+    	
+    	//FieldCommands a;
+    	//a.addFieldSetJpa(fieldName, fieldType, typeName, mappedBy, notNull, nullRequired, sizeMin, sizeMax, cardinality, fetch, comment, transientModifier, permitReservedWords);
     }
     
     /**

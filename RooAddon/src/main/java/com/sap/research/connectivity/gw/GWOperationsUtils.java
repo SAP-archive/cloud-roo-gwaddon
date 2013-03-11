@@ -99,6 +99,7 @@ public class GWOperationsUtils {
      * 
      */
     
+    
     /*
      * Used for sub-package path of the connectivity classes
      */
@@ -229,8 +230,8 @@ public class GWOperationsUtils {
 	}
 
 
-	public Map<String, String> getFieldsOfRemoteEntity(String entityClassName, String nameSpace) {
-		Map<String, String> fields = new HashMap<String, String>();
+	public Map<String[], String> getFieldsOfRemoteEntity(String entityClassName, String nameSpace) {
+		Map<String[], String> fields = new HashMap<String[], String>();
 		String metaDataPath = getSubPackagePath(oDataFolder);
     	String metaDataFile = metaDataPath + SEPARATOR + nameSpace +"_metadata.xml";    
     	
@@ -250,7 +251,7 @@ public class GWOperationsUtils {
 		return fields;
 	}
 	
-	public void addRemoteFieldInPersistenceMethods(JavaSourceFileEditor entityClassFile, Map.Entry<String, String> fieldObj) {
+	public void addRemoteFieldInPersistenceMethods(JavaSourceFileEditor entityClassFile, Map.Entry<String[], String> fieldObj) {
 		ArrayList<JavaSourceMethod> globalMethodList = entityClassFile.getGlobalMethodList();
 		String pluralRemoteEntity = GwUtils.getInflectorPlural(entityClassFile.CLASS_NAME, Locale.ENGLISH);
 		String smallRemoteEntity = StringUtils.uncapitalize(entityClassFile.CLASS_NAME);
@@ -317,7 +318,7 @@ public class GWOperationsUtils {
 	}
 
 	
-	public void addPersistenceMethods(Map<String, String> fields, JavaSourceFileEditor entityClassFile, String remoteEntity, Map<String, String> keys) {
+	public void addPersistenceMethods(Map<String[], String> fields, JavaSourceFileEditor entityClassFile, String remoteEntity, Map<String[], String> keys) {
 	
 	    //  Persist
 		JavaSourceMethod persistMethod = new JavaSourceMethodBuilder()
@@ -378,7 +379,7 @@ public class GWOperationsUtils {
 											.methodName("count" + pluralRemoteEntity)
 											.methodPrefix("public static")
 											.returnType("long")
-											.methodBody(getCountMethodBody(fields, remoteEntity))
+											.methodBody(getCountMethodBody(remoteEntity))
 											.build();	
 		entityClassFile.addMethod(count);
 		
@@ -410,7 +411,7 @@ public class GWOperationsUtils {
 											.methodPrefix("public")
 											.returnType("void")
 											.annotations("@Transactional")
-											.methodBody(getRemoveMethodBody(fields, remoteEntity, keys))
+											.methodBody(getRemoveMethodBody(remoteEntity))
 											.build();
 		entityClassFile.addMethod(remove);		
 		
@@ -427,7 +428,7 @@ public class GWOperationsUtils {
 		entityClassFile.addMethod(localRemove);		
 	}
    
-	public String getRemoveMethodBody(Map<String, String> fields, String remoteEntity, Map<String, String> keys) {
+	public String getRemoveMethodBody(String remoteEntity) {
 		
 		String returnString = generateDecodedKey(2, "Id");
 		returnString += "\t\tOEntityKey " + ODATA_KEY + " = OEntityKey.parse(" + DECODED_KEY + ");\n";
@@ -451,7 +452,7 @@ public class GWOperationsUtils {
 		return returnString;
 	}
 
-	public String getMergeMethodBody(Map<String, String> fields, String remoteEntity, Map<String, String> keys) {
+	public String getMergeMethodBody(Map<String[], String> fields, String remoteEntity, Map<String[], String> keys) {
 		
 		String returnString = generateDecodedKey(2, "Id");
 		returnString += "\t\tOEntityKey " + ODATA_KEY + " = OEntityKey.parse(" + DECODED_KEY + ");\n";
@@ -461,7 +462,7 @@ public class GWOperationsUtils {
 		
 		returnString += "\t\tboolean modifyRequest = " + GwUtils.GW_CONNECTION_FIELD_NAME + ".rooODataConsumer.updateEntity(remote" + remoteEntity +")\n";
 		
-		for (Map.Entry<String, String> field: fields.entrySet()){
+		for (Map.Entry<String[], String> field: fields.entrySet()){
 			/*
 			 * We do not update the key fields
 			 */
@@ -490,7 +491,7 @@ public class GWOperationsUtils {
 		return returnString;
 	}
 
-	public String getCountMethodBody(Map<String, String> fields, String remoteEntity) {
+	public String getCountMethodBody(String remoteEntity) {
 		
 		String smallRemoteEntity = StringUtils.uncapitalize(remoteEntity);
 		
@@ -506,7 +507,7 @@ public class GWOperationsUtils {
 		return returnString;
 	}
 
-	public String getFindMethodBody(Map<String, String> fields, String remoteEntity) {
+	public String getFindMethodBody(Map<String[], String> fields, String remoteEntity) {
 		
 		String smallRemoteEntity = StringUtils.uncapitalize(remoteEntity);
 		
@@ -522,7 +523,7 @@ public class GWOperationsUtils {
 		returnString += "\t\tDateTimeFormatter DTformatter = ISODateTimeFormat.dateHourMinuteSecondFraction();\n";
 		returnString += "\t\tDateTimeFormatter DTOformatter = ISODateTimeFormat.dateTime();\n";		
 		
-		for (Map.Entry<String, String> field: fields.entrySet()){
+		for (Map.Entry<String[], String> field: fields.entrySet()){
 			returnString += makeGWShowFieldCode("\t\t", "virtual" + remoteEntity, smallRemoteEntity, field);
 		}
 		
@@ -575,7 +576,7 @@ public class GWOperationsUtils {
 		return parameters;
 	}
 
-	public String getfindAllMethodBody(Map<String, String> fields, Map<String, String> keys, String remoteEntity) {
+	public String getfindAllMethodBody(Map<String[], String> fields, Map<String[], String> keys, String remoteEntity) {
 		
 		String smallRemoteEntity = StringUtils.uncapitalize(remoteEntity);
 		
@@ -589,7 +590,7 @@ public class GWOperationsUtils {
 		returnString += "\t\t\tDateTimeFormatter DTformatter = ISODateTimeFormat.dateHourMinuteSecondFraction();\n";
 		returnString += "\t\t\tDateTimeFormatter DTOformatter = ISODateTimeFormat.dateTime();\n";
 		
-		for (Map.Entry<String, String> field: fields.entrySet()) {
+		for (Map.Entry<String[], String> field: fields.entrySet()) {
 				returnString += makeGWShowFieldCode("\t\t\t", smallRemoteEntity + "Instance", smallRemoteEntity + "Item", field);
 		}
 
@@ -620,13 +621,13 @@ public class GWOperationsUtils {
 		return returnString;
 	}
 
-   public String getPersistMethodBody(Map<String, String> fields, Map<String, String> keys, String remoteEntity) {
+   public String getPersistMethodBody(Map<String[], String> fields, Map<String[], String> keys, String remoteEntity) {
 	   
 		String returnString = "\t\tOEntity newEntity;\n";
 		returnString += "\n";
 		returnString += "\t\tnewEntity = " + GwUtils.GW_CONNECTION_FIELD_NAME + ".rooODataConsumer.createEntity(\"" + remoteEntity +"\")\n";
 		
-		for (Map.Entry<String, String> field: fields.entrySet()){
+		for (Map.Entry<String[], String> field: fields.entrySet()){
 			returnString += makeGWPersistFieldCode("\t\t\t", field);
 		}
 		
@@ -649,7 +650,7 @@ public class GWOperationsUtils {
 		return returnString;
   }
    
-   public String generateEncodedKey(Map<String, String> keys, int numberOfTabs, String instance) {
+   public String generateEncodedKey(Map<String[], String> keys, int numberOfTabs, String instance) {
 	   
 	   String returnString = "\n";
 	   String tabs = "";
@@ -683,13 +684,15 @@ public class GWOperationsUtils {
    }
    
  
-   private String generateDBKeyFromODataKeys(Map<String, String> keys, String tabs, String instanceMethod) {
+   private String generateDBKeyFromODataKeys(Map<String[], String> keys, String tabs, String instanceMethod) {
 	String returnString;
 	String keyBuilderString = "";
 	String separator = "";
-	for(Map.Entry<String, String> key: keys.entrySet()){
-		keyBuilderString += separator + "\"" + key.getKey() + "\", ";
-		keyBuilderString += instanceMethod + "get" + key.getKey() + "().toString()";
+	for(Map.Entry<String[], String> key: keys.entrySet()){
+		String remoteFieldName = key.getKey()[0];
+		String localFieldName = key.getKey()[1];
+		keyBuilderString += separator + "\"" + remoteFieldName + "\", ";
+		keyBuilderString += instanceMethod + "get" + localFieldName + "() + \"\"";
 		separator = ",";
 	}
    
@@ -714,21 +717,22 @@ public class GWOperationsUtils {
 	   return returnString;
    }   
 
-   private String makeGWShowFieldCode(String tabLevels, String entityName, String remoteEntity, Map.Entry<String, String> field) {
+   private String makeGWShowFieldCode(String tabLevels, String entityName, String remoteEntity, Map.Entry<String[], String> field) {
 		String startCast = "", endCast = "", returnString = "";
-		String fieldName = field.getKey();
+		String remoteFieldName = field.getKey()[0];
+		String localFieldName = field.getKey()[1];
 		
 		if (field.getValue().equals("DateTime")) {
-			returnString = tabLevels + "DateTime " + fieldName.toLowerCase() + "DT = DTformatter.parseDateTime(" + remoteEntity + 
-					".getProperty(\"" + fieldName  + "\").getValue().toString());\n";	
-			returnString += tabLevels + "Date " + fieldName.toLowerCase() + "ConvertedDate = " +  fieldName.toLowerCase() + "DT.toDate();\n";
-			returnString += tabLevels + entityName + ".set" + fieldName + "(" + fieldName.toLowerCase() + "ConvertedDate);\n";			
+			returnString = tabLevels + "DateTime " + localFieldName.toLowerCase() + "DT = DTformatter.parseDateTime(" + remoteEntity + 
+					".getProperty(\"" + remoteFieldName  + "\").getValue().toString());\n";	
+			returnString += tabLevels + "Date " + localFieldName.toLowerCase() + "ConvertedDate = " +  localFieldName.toLowerCase() + "DT.toDate();\n";
+			returnString += tabLevels + entityName + ".set" + localFieldName + "(" + localFieldName.toLowerCase() + "ConvertedDate);\n";			
 
 		} else if(field.getValue().equals("DateTimeOffset")) {
-			returnString = tabLevels + "DateTime " + fieldName.toLowerCase() + "DT = DTOformatter.parseDateTime(" + remoteEntity + 
-					".getProperty(\"" + fieldName  + "\").getValue().toString());\n";	
-			returnString += tabLevels + "Date " + fieldName.toLowerCase() + "ConvertedDate = " +  fieldName.toLowerCase() + "DT.toDate();\n";
-			returnString += tabLevels + entityName + ".set" + fieldName + "(" + fieldName.toLowerCase() + "ConvertedDate);\n";
+			returnString = tabLevels + "DateTime " + localFieldName.toLowerCase() + "DT = DTOformatter.parseDateTime(" + remoteEntity + 
+					".getProperty(\"" + remoteFieldName  + "\").getValue().toString());\n";	
+			returnString += tabLevels + "Date " + localFieldName.toLowerCase() + "ConvertedDate = " +  localFieldName.toLowerCase() + "DT.toDate();\n";
+			returnString += tabLevels + entityName + ".set" + localFieldName + "(" + localFieldName.toLowerCase() + "ConvertedDate);\n";
 			
 		} else {
 			String javaType = GwUtils.odataToJavaType(field.getValue());			
@@ -736,8 +740,8 @@ public class GWOperationsUtils {
 			if (!startCast.isEmpty())
 				endCast = ")";
 			
-			returnString =  tabLevels + entityName + ".set" + fieldName + "(" + startCast + remoteEntity + ".getProperty(\""
-				+ fieldName + "\").getValue().toString()" + endCast + ");\n";
+			returnString =  tabLevels + entityName + ".set" + localFieldName + "(" + startCast + remoteEntity + ".getProperty(\""
+				+ remoteFieldName + "\").getValue().toString()" + endCast + ");\n";
 		}
 		
 		return returnString;
@@ -806,34 +810,35 @@ public class GWOperationsUtils {
 	   entityClassFile.addImports(connectivityImports);	   
    }
 
-	public void addGatewayFields(Map<String, String> keys, Map<String, String> fields, JavaSourceFileEditor entityClassFile) throws Exception{
+	public void addGatewayFields(Map<String[], String> keys, Map<String[], String> fields, JavaSourceFileEditor entityClassFile) throws Exception{
 
 		// Add Keys 
-        for (Map.Entry<String, String> key: keys.entrySet()) {
+        for (Map.Entry<String[], String> key: keys.entrySet()) {
             addKeyInGWJavaFile(keys, entityClassFile, key);		
         }		
  		 
         // Add Fields
         if (!fields.isEmpty()) {
-	        for (Map.Entry<String, String> field: fields.entrySet()) {
+	        for (Map.Entry<String[], String> field: fields.entrySet()) {
 	        	 addRemoteFieldInGWJavaFile(entityClassFile, field);	
 	     	     addRemoteFieldInPersistenceMethods(entityClassFile, field);
 	          }
         }
 	}
 
-	public void addKeyInGWJavaFile(Map<String, String> keys, JavaSourceFileEditor entityClassFile, Map.Entry<String, String> key) {
+	public void addKeyInGWJavaFile(Map<String[], String> keys, JavaSourceFileEditor entityClassFile, Map.Entry<String[], String> key) {
 		//Map ODataFieldTypes to JavaTypes 
 		String oDataType = key.getValue();
 		String javaType = GwUtils.odataToJavaType(oDataType);
 		
+		String localFieldName = key.getKey()[1];
 		JavaSourceFieldBuilder fieldBuilder = new JavaSourceFieldBuilder()
 													.fieldPrefix("private")
 													.fieldType(javaType)
-													.fieldName(key.getKey())
+													.fieldName(localFieldName)
 													.fieldValue("");
 		
-		if (key.getKey().equals("Id"))
+		if (localFieldName.equals("Id"))
 			fieldBuilder = fieldBuilder.fieldAnnotations("@Id\n\t@Column(name = \"id\")");
 		// \t@GeneratedValue(strategy = GenerationType.AUTO)\n
 		
@@ -843,34 +848,34 @@ public class GWOperationsUtils {
 		JavaSourceField fieldDeclaration = fieldBuilder.build();		
 
 		entityClassFile.addGlobalField(fieldDeclaration);
-      
-		if (!key.getKey().equals("Id")) {
+		
+		if (!localFieldName.equals("Id")) {
 			JavaSourceMethod getMethod = new JavaSourceMethodBuilder()
-												.methodName("get"+key.getKey())
+												.methodName("get"+localFieldName)
 												.methodPrefix("public")
 												.returnType(javaType)
-												.methodBody("\t\t" + "return" + " " + "this." + key.getKey() + ";\n")
+												.methodBody("\t\t" + "return" + " " + "this." + localFieldName + ";\n")
 												.build(); 
 			entityClassFile.addMethod(getMethod);
 			
 			ArrayList<String> parameters = new ArrayList<String>();
-			parameters.add(javaType + " " + key.getKey());
+			parameters.add(javaType + " " + localFieldName);
 			
 			JavaSourceMethod setMethod = new JavaSourceMethodBuilder()
-												.methodName("set"+key.getKey())
+												.methodName("set"+localFieldName)
 												.methodPrefix("public")
 												.returnType("void")
 											    .parameters(parameters)												
-												.methodBody("\t\t" + "this." + key.getKey() + " = " + key.getKey() + ";\n")
+												.methodBody("\t\t" + "this." + localFieldName + " = " + localFieldName + ";\n")
 												.build(); 
 			
 			entityClassFile.addMethod(setMethod);
 		}
 	}
 	
-	public void addRemoteFieldInGWJavaFile(JavaSourceFileEditor entityClassFile, Map.Entry<String, String> field) throws Exception{
+	public void addRemoteFieldInGWJavaFile(JavaSourceFileEditor entityClassFile, Map.Entry<String[], String> field) throws Exception{
 		
-		String fieldName = field.getKey();
+		String fieldName = field.getKey()[1];
 		//Map ODataFieldTypes to JavaTypes 
 		String oDataType = field.getValue();
 		String javaType = GwUtils.odataToJavaType(oDataType);
@@ -922,8 +927,10 @@ public class GWOperationsUtils {
 		entityClassFile.addMethod(setMethod);
 	}
 
-	private String makeGWPersistFieldCode(String tabLevels, Map.Entry<String, String> fieldObj) {
+	private String makeGWPersistFieldCode(String tabLevels, Map.Entry<String[], String> fieldObj) {
 		String reversedCast = "", dateTimeOffsetCastStart = "", dateTimeOffsetCastEnd = "";
+		String remoteFieldName = fieldObj.getKey()[0];
+		String localFieldName = fieldObj.getKey()[1];
 		if (fieldObj.getValue().equals("DateTimeOffset")) {
 			reversedCast = "datetimeOffset";
 			dateTimeOffsetCastStart = "new DateTime(";
@@ -933,18 +940,18 @@ public class GWOperationsUtils {
 			reversedCast = GwUtils.generateReversedCast(GwUtils.odataToJavaType(fieldObj.getValue()));
 		}
 		
-		return tabLevels + ".properties(OProperties." + reversedCast + "(\"" + fieldObj.getKey() + "\", " + dateTimeOffsetCastStart + "get" 
-				+ StringUtils.capitalize(fieldObj.getKey()) + "()" + dateTimeOffsetCastEnd + "))\n";
+		return tabLevels + ".properties(OProperties." + reversedCast + "(\"" + remoteFieldName + "\", " + dateTimeOffsetCastStart + "get" 
+				+ StringUtils.capitalize(localFieldName) + "()" + dateTimeOffsetCastEnd + "))\n";
 	}
 	
-	public Map.Entry<String, String> getValidatedField(String localClassName, String fieldName, JavaSourceFileEditor entityClassFile) throws Exception {
-		Map.Entry<String, String> fieldObj = null;
+	public Map.Entry<String[], String> getValidatedField(String localClassName, String fieldName, JavaSourceFileEditor entityClassFile) throws Exception {
+		Map.Entry<String[], String> fieldObj = null;
 		if (!entityClassFile.fieldExists(fieldName)) {
     	   String nameSpace = GwUtils.getNamespaceFromClass(entityClassFile);
-    	   Map<String, String> fields = getFieldsOfRemoteEntity(localClassName, nameSpace);
+    	   Map<String[], String> fields = getFieldsOfRemoteEntity(localClassName, nameSpace);
 		
-    	   for(Map.Entry<String, String> field : fields.entrySet()){
-    		   if (field.getKey().equals(fieldName)) {
+    	   for(Map.Entry<String[], String> field : fields.entrySet()){
+    		   if (field.getKey()[0].equals(fieldName)) {
     			   fieldObj = field;
     			   break;
     		   }

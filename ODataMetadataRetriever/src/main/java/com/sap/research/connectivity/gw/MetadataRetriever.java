@@ -30,8 +30,10 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.odata4j.consumer.behaviors.OClientBehaviors;
+import org.odata4j.edm.EdmAssociationEnd;
 import org.odata4j.edm.EdmDataServices;
 import org.odata4j.edm.EdmEntitySet;
+import org.odata4j.edm.EdmNavigationProperty;
 import org.odata4j.edm.EdmProperty;
 import org.odata4j.jersey.consumer.ODataJerseyConsumer;
 import org.w3c.dom.Attr;
@@ -98,7 +100,9 @@ public class MetadataRetriever {
 		    			entityField.appendChild(fieldName);
 		    			
 		    			Element fieldType = doc.createElement("fieldtype");
-		    			fieldType.appendChild(doc.createTextNode(ep.getType().getFullyQualifiedTypeName().substring(4)));
+		    			String remoteFieldType = ep.getType().getFullyQualifiedTypeName();
+		    			remoteFieldType = (remoteFieldType.toLowerCase().startsWith("edm.")) ? remoteFieldType.substring(4) : remoteFieldType;
+						fieldType.appendChild(doc.createTextNode(remoteFieldType));
 		    			entityField.appendChild(fieldType);	
 
 		    			Element key = doc.createElement("key");
@@ -112,24 +116,55 @@ public class MetadataRetriever {
 		    			entityField.appendChild(key);		
 		    		}					
 					
+		    		for (EdmNavigationProperty navProp : es.getType().getNavigationProperties()) {
+		    			Element navPropertyXMLNode = doc.createElement("navproperty");
+		    			entity.appendChild(navPropertyXMLNode);
+		    			
+		    			Element relationship = doc.createElement("relationship_id");
+		    			relationship.appendChild(doc.createTextNode(navProp.getRelationship().getName()));
+		    			navPropertyXMLNode.appendChild(relationship);
+		    			
+		    			Element navName = doc.createElement("navpath");
+		    			navName.appendChild(doc.createTextNode(navProp.getName()));
+		    			navPropertyXMLNode.appendChild(navName);
+		    			
+		    			Element fromNode = doc.createElement("end1");
+		    			EdmAssociationEnd end1 = navProp.getRelationship().getEnd1();
+						fromNode.appendChild(doc.createTextNode(end1.getType().getName()));
+		    			navPropertyXMLNode.appendChild(fromNode);
+		    			
+		    			Element toNode = doc.createElement("end2");
+		    			EdmAssociationEnd end2 = navProp.getRelationship().getEnd2();
+						toNode.appendChild(doc.createTextNode(end2.getType().getName()));
+		    			navPropertyXMLNode.appendChild(toNode);
+		    			
+						Attr multiplicity1 = doc.createAttribute("multiplicity");
+						multiplicity1.setValue(end1.getMultiplicity().getSymbolString());
+						fromNode.setAttributeNode(multiplicity1);	
+		    			
+						Attr multiplicity2 = doc.createAttribute("multiplicity");
+		    			multiplicity2.setValue(end2.getMultiplicity().getSymbolString());
+						toNode.setAttributeNode(multiplicity2);	
+		    		}
 				}
+				
 
 				StringWriter out = new StringWriter();				
 				Transformer transformer = TransformerFactory.newInstance().newTransformer();
 				
 				transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-			    transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 			    transformer.transform(new DOMSource(doc), new StreamResult(out));	
 			    
 				System.out.print(out.toString());
 				System.out.flush();
 		 
 			  } catch (ParserConfigurationException pce) {
-				pce.printStackTrace();
+				  pce.printStackTrace(System.out);
 			  } catch (TransformerException tfe) {
-				tfe.printStackTrace();				
-			  }				
-
+				  tfe.printStackTrace(System.out);				
+			  }	catch (Exception e) {
+				  e.printStackTrace(System.out);
+			  }
 	}
 
 }

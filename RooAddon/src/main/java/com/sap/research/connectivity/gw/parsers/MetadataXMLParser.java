@@ -16,6 +16,7 @@
 
 package com.sap.research.connectivity.gw.parsers;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,13 +26,19 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import org.springframework.roo.model.ReservedWords;
+
 public class MetadataXMLParser {
 	
 	Document doc;
 	String remoteEntity;
 	
-	Map<String, String> fields = new HashMap<String, String>();
-	Map<String, String> keys = new HashMap<String, String>();	
+	/*
+	 * We use array in the value, to keep the original name (from the remote system), because we might change it locally 
+	 * (for cases like "id", "user", etc.) 
+	 */
+	Map<String[], String> fields = new HashMap<String[], String>();
+	Map<String[], String> keys = new HashMap<String[], String>();	
 	
 
 	public MetadataXMLParser(Document document, String remoteEntity){
@@ -68,19 +75,19 @@ public class MetadataXMLParser {
 		  String key       = getTextValue(field, "key");
 		  
 		  if (key.equals("true")){
-			  keys.put(fieldName, fieldType);
+			  keys.put(processRemoteField(fieldName), fieldType);
 		  }else {
-			  fields.put(fieldName, fieldType);  
+			  fields.put(processRemoteField(fieldName), fieldType);  
 		  }
 	  }		
 
 	}
 	
-	public Map<String, String> getFields() {
+	public Map<String[], String> getFields() {
 		return fields;
 	}
 
-	public Map<String, String> getKeys() {
+	public Map<String[], String> getKeys() {
 		return keys;
 	}	
 	
@@ -94,5 +101,22 @@ public class MetadataXMLParser {
 		}
 		return textVal;
 	}	
+	
+	private String[] processRemoteField(String remoteFieldName) {
+		String[] returnArray = new String[2];
+		returnArray[0] = remoteFieldName;
+		returnArray[1] = remoteFieldName;
+		try {
+			ReservedWords.verifyReservedWordsNotPresent(remoteFieldName);
+			
+			if (Arrays.asList(Constants.RESERVED_FIELD_WORDS_ARRAY).contains(remoteFieldName.toUpperCase())) {
+				throw new IllegalStateException("Found a word which has potential dangerous implications ");
+			}
+		} catch (IllegalStateException e) {
+			returnArray[1] = "remote_" + remoteFieldName;
+		}
+		
+		return returnArray;
+	}
 
 }
