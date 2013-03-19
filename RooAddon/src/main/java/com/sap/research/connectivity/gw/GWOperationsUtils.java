@@ -638,6 +638,10 @@ public class GWOperationsUtils {
 		 */
 		//returnString += generateEncodedKey(keys, 2, "");
 		
+		for (Map.Entry<String[], String> keyField: keys.entrySet()){
+			returnString += makeGWShowFieldCode("\t\t","this", "newEntity", keyField);
+		}
+		
 		returnString += generateDBKeyFromODataKeys(keys, "\t\t", "");
 		returnString += "\t\tsetId(" + ODATA_KEY + ".toKeyString());\n";
 		returnString += "\t\tlocalPersist();\n";
@@ -692,7 +696,7 @@ public class GWOperationsUtils {
 		String remoteFieldName = key.getKey()[0];
 		String localFieldName = key.getKey()[1];
 		keyBuilderString += separator + "\"" + remoteFieldName + "\", ";
-		keyBuilderString += instanceMethod + "get" + localFieldName + "() + \"\"";
+		keyBuilderString += instanceMethod + "get" + localFieldName + "()";
 		separator = ",";
 	}
    
