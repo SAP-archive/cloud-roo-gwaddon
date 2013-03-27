@@ -13,7 +13,7 @@ connect your Roo-generated projects to "SAP Netweaver Gateway" systems. This add
 
 You can use Roo and the provided addon here to create in minutes a basic web application having (selected) entities connected to entities exposed by "SAP NetWeaver Gateway" systems. Roo generates 100% pure Java code, packaged as a standard Maven project, so it is easy to handle and extend. Import it in your favorite IDE like Eclipse and start extending it, or write a mobile app connecting to the REST interfaces to your data, that Roo can automatically create for you.
 
-In addition, you may use the [SAP NetWeaver Cloud Addon for Spring Roo](http://sapnwcloudlabs.github.com/nwcloud-roo-addon/) to deploy your application to [SAP NetWeaver Cloud](http://scn.sap.com/community/developer-center/cloud-platform), which is a Java-based Platform-as-a-Service (PaaS) provided by [SAP AG](http://www.sap.com/). Currently SAP AG provides a [free trial](http://scn.sap.com/docs/DOC-28197) of SAP NetWeaver Cloud, so it's easy to give it a try.
+In addition, you may use the [SAP NetWeaver Cloud Addon for Spring Roo](http://sap.github.com/cloud-roo-addon/) to deploy your application to [SAP NetWeaver Cloud](http://scn.sap.com/community/developer-center/cloud-platform), which is a Java-based Platform-as-a-Service (PaaS) provided by [SAP AG](http://www.sap.com/). Currently SAP AG provides a [free trial](http://scn.sap.com/docs/DOC-28197) of SAP NetWeaver Cloud, so it's easy to give it a try.
 
 Whether you intend to create a REST back-end application which aggregates information from multiple data sources, or simply need a fast and headache-free way of connecting your application to "SAP NetWeaver Gateway" endpoints, learn how this addon can help you connect to business systems in just a few steps.
 
@@ -46,7 +46,7 @@ If you don't want to build the addon by yourself, but just use it, then please r
 
 ### Prerequisites ###
 
-Except for the [NWCloud-Maven-Plugin](https://github.com/sapnwcloudlabs/nwcloud-maven-plugin) (which is not mandatory), the prerequisites are similar to those of the [SAP NetWeaver Cloud Addon for Spring Roo](http://sapnwcloudlabs.github.com/nwcloud-roo-addon/). Please mind that the addon has been tested with Java versions 1.6 and 1.7.
+Except for the [NWCloud-Maven-Plugin](https://github.com/sap/cloud-maven-plugin) (which is not mandatory), the prerequisites are similar to those of the [SAP NetWeaver Cloud Addon for Spring Roo](http://sap.github.com/cloud-roo-addon/). Please mind that the addon has been tested with Java versions 1.6 and 1.7.
 
 1. Building
 
@@ -165,7 +165,7 @@ In the current version, the addon gives the possibility of defining Roo entititi
 
 Ok, but then you might ask, why do I need to set up persistency first?
 
-Well, since Spring Roo’s generated applications rely on JPA persistency (any entity created in Spring Roo is a JPA-entity), one should issue the persistency setup commands before running any NetWeaver Gateway connectivity commands. No data is actually persisted. This is just a workaround for making maximum use of Roo's capabilities.
+Well, since Spring Rooï¿½s generated applications rely on JPA persistency (any entity created in Spring Roo is a JPA-entity), one should issue the persistency setup commands before running any NetWeaver Gateway connectivity commands. No data is actually persisted. This is just a workaround for making maximum use of Roo's capabilities.
 
 #### Is there a list of features? ####
 
