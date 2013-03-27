@@ -24,7 +24,6 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.Service;
 import org.osgi.service.component.ComponentContext;
-import org.springframework.roo.classpath.operations.FieldCommands;
 import org.springframework.roo.model.JavaType;
 import org.springframework.roo.shell.CliAvailabilityIndicator;
 import org.springframework.roo.shell.CliCommand;
@@ -185,9 +184,6 @@ public class GwCommands implements CommandMarker { // All command types must imp
     	} catch (Exception e) {
     		log.severe(e.getMessage());
     	}
-    	
-    	//FieldCommands a;
-    	//a.addFieldSetJpa(fieldName, fieldType, typeName, mappedBy, notNull, nullRequired, sizeMin, sizeMax, cardinality, fetch, comment, transientModifier, permitReservedWords);
     }
     
     /**
@@ -201,11 +197,12 @@ public class GwCommands implements CommandMarker { // All command types must imp
     				help = "Whether to import all fields from the remote entity") final boolean importAll
     		) {
     	
+        //TODO: ADD A PARAMETER TO SPECIFY WHETHER THE RELATIONS SHOULD BE IMPORTED OR NOT
     	// Create a class with JPA specific annotations
     	try {
 			operations.createEntity(endPointName.getName(), remoteEntitySet.getName());
 	    	// Add fields, getter/setters and persistence methods
-	     	operations.addFieldsAndMethods(endPointName.getName(), remoteEntitySet.getName(), importAll);
+	     	operations.addFieldsMethodsAndRelations(endPointName.getName(), remoteEntitySet.getName(), importAll);
 		} catch (Exception e) {
 			log.severe(e.getMessage());
 		}

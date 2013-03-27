@@ -240,39 +240,27 @@ public class GwOperationsImpl extends GWOperationsUtils implements GwOperations 
         typeManagementService.createOrUpdateTypeOnDisk(cidBuilder.build());
     }
     
-    public void addFieldsAndMethods(final String namespace, String remoteEntity, boolean importAll) throws Exception{
+    public void addFieldsMethodsAndRelations(final String namespace, String remoteEntity, boolean importAll) throws Exception{
     	
     //   Extract fields and keys from Metadata XML
 		 Map<String[], String> fields = new HashMap<String[], String>();
 		 Map<String[], String> keys = new HashMap<String[], String>();
 		 Map<String[], String> allFields = new HashMap<String[], String>();
+		 Map<String, String[]> relationships = new HashMap<String, String[]>();
 		  
-		 String metaDataPath = getSubPackagePath(oDataFolder);
-		 String metaDataFile = metaDataPath + SEPARATOR + namespace +"_metadata.xml";
-		  
-		 InputStream metaDataIs = fileManager.getInputStream(metaDataFile);
-		  
-		 Document doc;
-		  
-		 try {
-			  doc = XmlUtils.getDocumentBuilder().parse(metaDataIs);
-		 } catch (Exception ex) {
-			  throw new IllegalStateException(ex);
-		 }         
-         
-		 MetadataXMLParser xmlParser = new MetadataXMLParser(doc, remoteEntity);
+		 MetadataXMLParser xmlParser = getXMLParser(namespace, remoteEntity);
 		 xmlParser.parse();
 		 
-		 if (importAll)
-			 fields = xmlParser.getFields();
-		 
-		 keys = xmlParser.getKeys();
-         
-    //   Get handler for File Editor to edit the entity file  
+	//   Get handler for File Editor to edit the entity file  
          JavaSourceFileEditor entityClassFile = getJavaFileEditor(domain, remoteEntity); 
  		 
  	//   Add Imports 
  		 addImports(entityClassFile, namespace);
+ 		 
+		 if (importAll)
+			 fields = xmlParser.getFields();
+		 
+		 keys = xmlParser.getKeys();
          
     //   Add Field declaration for OData Connector
          JavaSourceField odc = new JavaSourceFieldBuilder()
@@ -299,9 +287,31 @@ public class GwOperationsImpl extends GWOperationsUtils implements GwOperations 
          allFields.putAll(fields);
          addPersistenceMethods(allFields, entityClassFile, remoteEntity, keys);
          
+    //  Add relationships
+		 relationships = xmlParser.getRelationships();
+		 addRelationships(relationships, remoteEntity, entityClassFile);
+		 
          entityClassFile.makeFile();
-         //throw new Exception(entityClassFile.getFileContent());
+//       throw new Exception(entityClassFile.getFileContent());
    }
+
+	private MetadataXMLParser getXMLParser(final String namespace, String remoteEntity) throws IllegalStateException {
+		 String metaDataPath = getSubPackagePath(oDataFolder);
+		 String metaDataFile = metaDataPath + SEPARATOR + namespace +"_metadata.xml";
+		  
+		 InputStream metaDataIs = fileManager.getInputStream(metaDataFile);
+		  
+		 Document doc;
+		  
+		 try {
+			  doc = XmlUtils.getDocumentBuilder().parse(metaDataIs);
+		 } catch (Exception ex) {
+			  throw new IllegalStateException(ex);
+		 }         
+         
+		 MetadataXMLParser xmlParser = new MetadataXMLParser(doc, remoteEntity);
+		return xmlParser;
+	}
     
    public void modifyController(final String remoteEntity) throws Exception{
 	
@@ -360,5 +370,4 @@ public class GwOperationsImpl extends GWOperationsUtils implements GwOperations 
 	   addLocalFieldInPersistenceMethods(entityClassFile, fieldName, processedTypeName);
        entityClassFile.makeFile();
    }
-
 }

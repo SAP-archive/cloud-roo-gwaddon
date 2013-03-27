@@ -43,12 +43,11 @@ public interface GwOperations {
 	
 	void createEntity(String endpointName, String remoteEntitySetName) throws Exception;
 	
-	void addFieldsAndMethods(String namespace, String remoteEntity, boolean importAll) throws Exception;
+	void addFieldsMethodsAndRelations(String namespace, String remoteEntity, boolean importAll) throws Exception;
 	
 	void modifyController(final String remoteEntity) throws Exception;
 
 	void addRemoteFieldInGWClass(String localClassName, String fieldName) throws Exception;
 
 	void addLocalFieldInGWClass(String localClassName, String fieldName, JavaType fieldType) throws Exception;
-
 }

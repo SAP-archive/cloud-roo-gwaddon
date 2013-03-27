@@ -332,56 +332,44 @@ public class JavaSourceFileEditor implements JavaSourceFileEditorInterface {
 		return importList.contains(importClassName);		
 	}
 	
-	private void writeContentToFile(String tempContent) {
+	private void writeContentToFile(String tempContent) throws Exception {
 		OutputStream outputStream = sourceFile.getOutputStream();
 		try {
 			IOUtils.write(tempContent, outputStream);
 		} catch (IOException e) {
-			System.out.println("Could not write into output class file");
 			e.printStackTrace();
+			throw new Exception("Could not write into output class file");
 		} finally {
 			IOUtils.closeQuietly(outputStream);
 		}
 	}
 	
-	public String makeFile() {
+	public String makeFile() throws Exception{
 		StringBuffer newFileContent = new StringBuffer();
-		try {
-			newFileContent.append(getPackageLine());
-			newFileContent.append("\n\n");
-			
-			ArrayList<String> importClasses = getImportList();
-			for (String importClass : importClasses) {
-				newFileContent.append("import " + importClass + ";\n");
-			}
-			newFileContent.append("\n");
-			
-			newFileContent.append(classDeclaration);
-			newFileContent.append("{\n\n");
+		newFileContent.append(getPackageLine());
+		newFileContent.append("\n\n");
+		
+		ArrayList<String> importClasses = getImportList();
+		for (String importClass : importClasses) {
+			newFileContent.append("import " + importClass + ";\n");
+		}
+		newFileContent.append("\n");
+		
+		newFileContent.append(classDeclaration);
+		newFileContent.append("{\n\n");
 
-			for (JavaSourceField globalField : globalFieldList) {
-				newFileContent.append(globalField.FIELD_STRING + "\n");
-			}
-			newFileContent.append("\n");
-			
-			for (JavaSourceMethod globalMethod : globalMethodList) {
-				newFileContent.append(globalMethod.METHOD_STRING);
-			}
-			
-			newFileContent.append("\n}");
-		} catch (Error e){
-			e.printStackTrace();
-			return "";
+		for (JavaSourceField globalField : globalFieldList) {
+			newFileContent.append(globalField.FIELD_STRING + "\n");
+		}
+		newFileContent.append("\n");
+		
+		for (JavaSourceMethod globalMethod : globalMethodList) {
+			newFileContent.append(globalMethod.METHOD_STRING);
 		}
 		
+		newFileContent.append("\n}");
+		
 		String newFileContentString = newFileContent.toString();
-		/* try {
-			writeContentToFile(IOUtils.toString(sourceFile.getInputStream()));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		*/
 		writeContentToFile(newFileContentString);
 		
 		return newFileContentString;

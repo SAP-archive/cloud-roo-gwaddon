@@ -1,5 +1,8 @@
 <<PACKAGE>>
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.net.URLDecoder;
 import org.odata4j.consumer.behaviors.OClientBehaviors;
 import org.odata4j.jersey.consumer.ODataJerseyConsumer;
 
@@ -24,5 +27,23 @@ public class ODataConnectivity {
 		System.setProperty("https.proxyPort", _PORT);		
 	}
 	
+	public String getDecodedRemoteKey(String Id) {
+		String decodedKey = "";
+		try{
+			decodedKey = URLDecoder.decode(Id,"UTF-8");
+		}catch(UnsupportedEncodingException e){
+			e.printStackTrace();
+		}
+		return decodedKey;
+	}
 	
+	public String getEncodedRemoteKey(String Id) {
+		String encodedKey = "";
+		try{
+			encodedKey = URLEncoder.encode(Id,"UTF-8");
+		}catch(UnsupportedEncodingException e){
+			e.printStackTrace();
+		}
+		return encodedKey;
+	}
 }
