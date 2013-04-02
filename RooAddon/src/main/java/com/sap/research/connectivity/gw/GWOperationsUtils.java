@@ -1096,8 +1096,18 @@ public class GWOperationsUtils {
 			 */
 			else if (methodName.endsWith("findAll" + pluralRemoteEntity) || methodName.endsWith("find" + entityClassFile.CLASS_NAME + "Entries")) {
 				StringBuffer methodBody = new StringBuffer(method.getMethodBody());
-				methodBody.insert(methodBody.indexOf("} catch (Exception relationshipsException)"), 
-						makeGWShowRelationshipCode(entityClassFile.CLASS_NAME, smallRemoteEntity + "Instance", smallRemoteEntity + "Item", ODATA_KEY, nav, javaType, associationType, "\t\t"));
+				int insertPosition = methodBody.indexOf("} catch (Exception relationshipsException)");
+				boolean isFirstManyToMany = true;
+				if ("OneToMany ManyToMany".contains(associationType)) {
+					String manyToManyInsertReferenceString = StringUtils.uncapitalize(entityClassFile.CLASS_NAME) + "Link.isCollection()) {";
+					if (methodBody.indexOf(manyToManyInsertReferenceString) > -1) {
+						insertPosition = methodBody.indexOf(manyToManyInsertReferenceString);
+						isFirstManyToMany = false;
+					}
+				}
+				methodBody.insert(insertPosition, 
+						makeGWShowRelationshipCode(entityClassFile.CLASS_NAME, smallRemoteEntity + "Instance", smallRemoteEntity + "Item", ODATA_KEY, 
+								nav, javaType, associationType, "\t\t", isFirstManyToMany));
 				method.setMethodBody(methodBody.toString());
 			}
 			/*
@@ -1105,9 +1115,19 @@ public class GWOperationsUtils {
 			 */
 			else if (methodName.endsWith("find" + entityClassFile.CLASS_NAME)) {
 				StringBuffer methodBody = new StringBuffer(method.getMethodBody());
-				methodBody.insert(methodBody.indexOf("} catch (Exception relationshipsException)"), 
+				int insertPosition = methodBody.indexOf("} catch (Exception relationshipsException)");
+				boolean isFirstManyToMany = true;
+				if ("OneToMany ManyToMany".contains(associationType)) {
+					String manyToManyInsertReferenceString = StringUtils.uncapitalize(entityClassFile.CLASS_NAME) + "Link.isCollection()) {";
+					if (methodBody.indexOf(manyToManyInsertReferenceString) > -1) {
+						insertPosition = methodBody.indexOf(manyToManyInsertReferenceString);
+						isFirstManyToMany = false;
+					}
+				}
+				methodBody.insert(insertPosition, 
 						makeGWShowRelationshipCode(entityClassFile.CLASS_NAME, "virtual" + entityClassFile.CLASS_NAME, smallRemoteEntity,
-								"OEntityKey.parse(" + GwUtils.GW_CONNECTION_FIELD_NAME + ".getDecodedRemoteKey(Id))", nav, javaType, associationType, "\t\t\t"));
+								"OEntityKey.parse(" + GwUtils.GW_CONNECTION_FIELD_NAME + ".getDecodedRemoteKey(Id))", 
+								nav, javaType, associationType, "\t\t\t", isFirstManyToMany));
 				method.setMethodBody(methodBody.toString());
 			}
 		}
@@ -1136,7 +1156,7 @@ public class GWOperationsUtils {
 	}
 
 	private String makeGWShowRelationshipCode(String className, String virtualLocalEntityInstance, String remoteEntity, String remoteId, String nav, String javaType, 
-			String associationType, String tabs) {
+			String associationType, String tabs, boolean isFirstManyToMany) {
 		String smallClassName = StringUtils.uncapitalize(className);
 		String capitalNav = StringUtils.capitalize(nav);
 		String returnString = "";
@@ -1148,11 +1168,15 @@ public class GWOperationsUtils {
 						".getEntityKey().toKeyString());\n" ;
 			returnString += tabs + virtualLocalEntityInstance + ".set" + javaType + "(virtual" + javaType + ");\n" + tabs;
 		} else {
-			returnString += "List<OLink> " + smallClassName + "Links = " + remoteEntity + ".getLinks();\n" +
-					tabs + "\tfor(OLink " + smallClassName + "Link : " + smallClassName + "Links) {\n" +
-					tabs + "\t\tif (" + smallClassName + "Link.isCollection())\n";
-			
-			returnString +=	tabs + "\t\t\tif (" + smallClassName + "Link.getTitle().equals(\"" + nav + "\")) {\n" +
+			String extraReturn = "";
+			if (isFirstManyToMany) {
+				returnString += "List<OLink> " + smallClassName + "Links = " + remoteEntity + ".getLinks();\n" +
+						tabs + "\tfor(OLink " + smallClassName + "Link : " + smallClassName + "Links) {\n" +
+						tabs + "\t\tif (" + smallClassName + "Link.isCollection()) {\n";
+				extraReturn = "\n";
+			}
+				
+			returnString +=	extraReturn + tabs + "\t\t\tif (" + smallClassName + "Link.getTitle().equals(\"" + nav + "\")) {\n" +
 					tabs + "\t\t\t\tSet<" + javaType + "> virtual" + javaType + "List = new HashSet<" + javaType + ">();\n" +
 					tabs + "\t\t\t\tList<OEntity> remote" + javaType + "List = " + GwUtils.GW_CONNECTION_FIELD_NAME + ".rooODataConsumer.getEntities(" +
 							"OLinks.relatedEntities(" + smallClassName + "Link.getRelation(), " + smallClassName + "Link.getTitle(), " + 
@@ -1164,7 +1188,10 @@ public class GWOperationsUtils {
 					tabs + "\t\t\t\t\tvirtual" + javaType + "List.add(virtual" + javaType + ");\n" +
 					tabs + "\t\t\t\t}\n" +
 					tabs + "\t\t\t\t" + virtualLocalEntityInstance + ".set" + capitalNav + "(virtual" + javaType + "List);\n" +
-					tabs + "\t\t\t}\n" +
+					tabs + "\t\t\t}\n";
+			
+			if (isFirstManyToMany)				
+				returnString += tabs + "\t\t}\n" +
 					tabs + "}\n" + tabs;
 		}
 		

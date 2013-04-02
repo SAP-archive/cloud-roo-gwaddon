@@ -194,15 +194,17 @@ public class GwCommands implements CommandMarker { // All command types must imp
     		@CliOption(key = "namespace", optionContext = "connectivity", mandatory = true, help = "OData Endpoint URL") final GwEndpoint endPointName,
     		@CliOption(key = "remoteEntitySet", mandatory = true, help = "OData Entity Set Name") final GwRemoteEntity remoteEntitySet,
     		@CliOption(key = "import_all", mandatory = false, unspecifiedDefaultValue = "true", specifiedDefaultValue = "true", 
-    				help = "Whether to import all fields from the remote entity") final boolean importAll
+    				help = "Whether to import all fields from the remote entity") final boolean importAll,
+    	    @CliOption(key = "import_associations", mandatory = false, unspecifiedDefaultValue = "false", specifiedDefaultValue = "true", 
+    				help = "Whether to import associations of the remote entity. Please note that the associated entities must be created beforehand!") 
+    				final boolean importAssociations    				
     		) {
     	
-        //TODO: ADD A PARAMETER TO SPECIFY WHETHER THE RELATIONS SHOULD BE IMPORTED OR NOT
     	// Create a class with JPA specific annotations
     	try {
 			operations.createEntity(endPointName.getName(), remoteEntitySet.getName());
 	    	// Add fields, getter/setters and persistence methods
-	     	operations.addFieldsMethodsAndRelations(endPointName.getName(), remoteEntitySet.getName(), importAll);
+	     	operations.addFieldsMethodsAndRelations(endPointName.getName(), remoteEntitySet.getName(), importAll, importAssociations);
 		} catch (Exception e) {
 			log.severe(e.getMessage());
 		}

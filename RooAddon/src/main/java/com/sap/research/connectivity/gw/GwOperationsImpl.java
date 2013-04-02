@@ -240,13 +240,12 @@ public class GwOperationsImpl extends GWOperationsUtils implements GwOperations 
         typeManagementService.createOrUpdateTypeOnDisk(cidBuilder.build());
     }
     
-    public void addFieldsMethodsAndRelations(final String namespace, String remoteEntity, boolean importAll) throws Exception{
+    public void addFieldsMethodsAndRelations(final String namespace, String remoteEntity, boolean importAll, boolean importAssociations) throws Exception{
     	
     //   Extract fields and keys from Metadata XML
 		 Map<String[], String> fields = new HashMap<String[], String>();
 		 Map<String[], String> keys = new HashMap<String[], String>();
 		 Map<String[], String> allFields = new HashMap<String[], String>();
-		 Map<String, String[]> relationships = new HashMap<String, String[]>();
 		  
 		 MetadataXMLParser xmlParser = getXMLParser(namespace, remoteEntity);
 		 xmlParser.parse();
@@ -288,8 +287,11 @@ public class GwOperationsImpl extends GWOperationsUtils implements GwOperations 
          addPersistenceMethods(allFields, entityClassFile, remoteEntity, keys);
          
     //  Add relationships
-		 relationships = xmlParser.getRelationships();
-		 addRelationships(relationships, remoteEntity, entityClassFile);
+         if (importAssociations) {
+        	 Map<String, String[]> relationships = new HashMap<String, String[]>();
+    		 relationships = xmlParser.getRelationships();
+    		 addRelationships(relationships, remoteEntity, entityClassFile);
+         }
 		 
          entityClassFile.makeFile();
 //       throw new Exception(entityClassFile.getFileContent());

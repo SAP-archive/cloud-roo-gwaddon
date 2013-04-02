@@ -43,7 +43,7 @@ public interface GwOperations {
 	
 	void createEntity(String endpointName, String remoteEntitySetName) throws Exception;
 	
-	void addFieldsMethodsAndRelations(String namespace, String remoteEntity, boolean importAll) throws Exception;
+	void addFieldsMethodsAndRelations(String namespace, String remoteEntity, boolean importAll, boolean importAssociations) throws Exception;
 	
 	void modifyController(final String remoteEntity) throws Exception;
 
