@@ -21,8 +21,8 @@
     <groupId>com.sap.research</groupId>
     <artifactId>com.sap.research.connectivity.gw</artifactId>
     <packaging>bundle</packaging>
-    <version>1.1.0.RELEASE</version>
-    <name>nwcloud-roo-gwaddon</name>
+    <version>1.2.0.RELEASE</version>
+    <name>cloud-roo-gwaddon</name>
     <organization>
         <name>SAP AG</name>
         <url>http://www.sap.com/</url>
@@ -34,7 +34,7 @@
         </license>
     </licenses>
     <description>SAP NetWeaver Gateway Connectivity Addon for Spring Roo.</description>
-    <url>https://github.com/sapnwcloudlabs/nwcloud-roo-gwaddon</url>
+    <url>https://github.com/sap/cloud-roo-gwaddon</url>
     <properties>
         <roo.version>1.2.1.RELEASE</roo.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
