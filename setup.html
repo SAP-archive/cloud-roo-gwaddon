@@ -3,7 +3,7 @@
   <head>
     <meta charset='utf-8' />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="SAP NetWeaver Cloud Addon for Spring Roo - Setup" />
+    <meta name="description" content="SAP NetWeaver Gateway Connectivity Addon for Spring Roo - Setup" />
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
     <title>SAP NetWeaver Gateway Connectivity Addon for Spring Roo - Setup</title>
 	
@@ -27,7 +27,7 @@
     <!-- HEADER -->
     <div id="header_wrap" class="outer">
         <header class="inner">
-          <a id="forkme_banner" href="https://github.com/sapnwcloudlabs/nwcloud-roo-gwaddon">View on GitHub</a>
+          <a id="forkme_banner" href="https://github.com/SAP/cloud-roo-gwaddon">View on GitHub</a>
           <h1 id="project_title">SAP NetWeaver Gateway Connectivity Addon for Spring Roo</h1>
           <h2 id="project_tagline"><a href="index.html">Intro</a> | <a href="tutorial.html">Tutorial</a> &gt; Setup | <a href="overview.html">Overview</a></h2>
         </header>
@@ -41,13 +41,13 @@
 
         <p>A basic requirement to get started with our Roo addon, is a working installation of <a href="http://www.springsource.org/spring-roo">Roo</a> and <a href="http://maven.apache.org/">Maven</a>.</p>
 
-		<p>Please follow the steps mentioned in the <a href="http://sapnwcloudlabs.github.com/nwcloud-roo-addon/setup.html">SAP NetWeaver Cloud Addon setup</a>, in order to get Roo and Maven installed.</p>
+		<p>Please follow the steps mentioned in the <a href="http://sap.github.com/cloud-roo-addon/setup.html">SAP HANA Cloud Addon setup</a>, in order to get Roo and Maven installed.</p>
         
         <h2 id="installing-the-roo-addon">Installing the Roo addon</h2>
 
         <h3 id="download-and-extract-the-addon-package">Download and extract the addon package</h3>
 
-        <p>Download the ZIP archive of the addon package: <a href="nwcloud-roo-gwaddon-package.zip">nwcloud-roo-gwaddon-package.zip</a>.</p>
+        <p>Download the ZIP archive of the addon package: <a href="roo-gwaddon-package.zip">roo-gwaddon-package.zip</a>.</p>
 
         <p>Extract its contents to a folder of your choice. In the following this folder will be called <code>ROO_ADDONS</code>.</p>
 
@@ -61,12 +61,12 @@
 
         <p>If you are using Windows:</p>
 
-        <pre><code>install_gwaddon.bat</code></pre>
+        <pre><code>install_addons.bat</code></pre>
 
         <p>If you are using Linux or Mac OS:</p>
 
-        <pre><code>chmod +x ./install_gwaddons.sh
-./install_gwaddons.sh</code></pre>
+        <pre><code>chmod +x ./install_addons.sh
+./install_addons.sh</code></pre>
 
         <h3 id="check-installation-in-roo">Check installation in Roo</h3>
 
@@ -77,14 +77,14 @@
         <p>You should see the installed addon at the end of the appearing list, similar to this:</p>
 
         <pre><code>...
-[  75] [Active     ] [    1] nwcloud-roo-gwaddon (1.0.0.RELEASE)
+[  75] [Active     ] [    1] cloud-roo-gwaddon (1.2.0.RELEASE)
 ...</code></pre>
 
         <p>If you see a line like this, then the addon has been successfully installed to Roo.</p>
 
         <p>If such a line did not show up in the list, then try to manually install the addon using the following command:</p>
 
-        <pre><code>osgi start --url file:///ROO_ADDONS/com.sap.research.connectivity.gw-1.0.0.RELEASE.jar</code></pre>
+        <pre><code>osgi start --url file:///ROO_ADDONS/com.sap.research.connectivity.gw-1.2.0.RELEASE.jar</code></pre>
 
         <p>Hint: If there are any spaces in the path <code>ROO_ADDONS</code> please replace each of them with <code>%20</code> in this command.</p>
 
@@ -98,7 +98,7 @@
         
         <h2 id="and-now">And now?</h2>
 
-        <p>Everything should be set up now. If you need to do additional configurations, such as setting the proxy, please refer to the <a href="http://sapnwcloudlabs.github.com/nwcloud-roo-addon/setup.html">SAP NetWeaver Cloud Addon setup</a>.</p>
+        <p>Everything should be set up now. If you need to do additional configurations, such as setting the proxy, please refer to the <a href="http://sap.github.com/cloud-roo-addon/setup.html">SAP HANA Cloud Addon setup</a>.</p>
 		
 		<p>It's time to start the <a href="tutorial.html">tutorial</a>!</p>
       </section>

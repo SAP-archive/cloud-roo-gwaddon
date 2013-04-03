@@ -3,7 +3,7 @@
   <head>
     <meta charset='utf-8' />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="SAP NetWeaver Cloud Addon for Spring Roo - Tutorial" />
+    <meta name="description" content="SAP NetWeaver Gateway Connectivity Addon for Spring Roo - Tutorial" />
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
     <title>SAP NetWeaver Gateway Connectivity Addon for Spring Roo - Tutorial</title>
 	
@@ -27,7 +27,7 @@
     <!-- HEADER -->
     <div id="header_wrap" class="outer">
         <header class="inner">
-          <a id="forkme_banner" href="https://github.com/sapnwcloudlabs/nwcloud-roo-gwaddon">View on GitHub</a>
+          <a id="forkme_banner" href="https://github.com/SAP/cloud-roo-gwaddon">View on GitHub</a>
           <h1 id="project_title">SAP NetWeaver Gateway Connectivity Addon for Spring Roo</h1>
           <h2 id="project_tagline"><a href="index.html">Intro</a> | Tutorial &gt; <a href="setup.html">Setup</a> | <a href="overview.html">Overview</a></h2>
         </header>
@@ -43,7 +43,7 @@
 
       	<blockquote>
 			<p>In order to follow the tutorial, please make sure that you already have installed Roo as well as downloaded and installed our addon. Please refer to <a href="setup.html">Setting up Roo and addons</a> for instructions on how to do the initial setup.</p>
-			<p>We strongly recommend to pursue first the tutorial provided by the <a href="http://sapnwcloudlabs.github.com/nwcloud-roo-addon/">SAP Net Weaver Cloud Addon</a>.</p>      	  
+			<p>We strongly recommend to pursue first the tutorial provided by the <a href="http://sap.github.com/cloud-roo-addon/">SAP HANA Cloud Addon</a>.</p>      	  
       	</blockquote>
 
 		
@@ -76,18 +76,20 @@ roo&gt;</code></pre>
 persistence setup --provider ECLIPSELINK --database HYPERSONIC_IN_MEMORY</code></pre>
 
       	<p>The first command tells Roo to setup a project named <code>travelagency</code> having the top level package <code>com.sap.research</code> for our java classes.</p>
-		<p>The second command sets up the kind of persistency we want to use to store our data. The first parameter tells Roo to use <a href="http://www.eclipse.org/eclipselink/">Eclipse Link</a> as JPA provider. For compatibility reasons, in case you plan to to deploy later on your application to NW Cloud, we use Eclipse Link. The second parameter specifies that we want to use a <a href="http://hsqldb.org/">HSQLDB</a> that stores data just in memory. This is great for local testing, as we do not need to setup a database server.</p>
+		<p>The second command sets up the kind of persistency we want to use to store our data. The first parameter tells Roo to use <a href="http://www.eclipse.org/eclipselink/">Eclipse Link</a> as JPA provider. For compatibility reasons, in case you plan to to deploy later on your application to HANA Cloud, we use Eclipse Link. The second parameter specifies that we want to use a <a href="http://hsqldb.org/">HSQLDB</a> that stores data just in memory. This is great for local testing, as we do not need to setup a database server.</p>
 		
-		<p>Ok, but why do we need to set up persistency? The idea was to use the NetWeaver Gateway service as data provider, right? Right. However, since Spring Roo’s generated applications rely on JPA persistency (any entity created in Spring Roo is actually a JPA-entity), one should issue the persistency setup commands before running any NetWeaver Gateway connectivity commands. <strong>No data is actually persisted!</strong> This is just a workaround for making use of Roo's capabilities.</p>
+		<p>Ok, but why do we need to set up persistency? The idea was to use the NetWeaver Gateway service as data provider, right? Right. However, since Spring Roo’s generated applications rely on JPA persistency (any entity created in Spring Roo is actually a JPA-entity), one should issue the persistency setup commands before running any NetWeaver Gateway connectivity commands. This will also prove extremely useful if we want to extend the entities exposed by a Gateway system with custom attributes.</p>
 		
 		<h3 id="defining-the-data-model">Setting up NetWeaver Gateway connectivity</h3>
-		
-		Now the real fun starts. Issue the following commands:
+
+		<p>Now the real fun starts. Issue the following commands:</p>
 		
 		<pre><code>gateway setup
 gateway define odata_endpoint --Name sampleFlight --URL https://gw.esworkplace.sap.com/sap/opu/odata/IWBEP/RMTSAMPLEFLIGHT_2/ --USER GW@ESW --PASSWORD ESW4GW --HTTP_PROXYHOST proxy --HTTP_PROXYPORT 8080 --CSRF_MODE standard --TIMEOUT_CALL 30
 </code></pre>
 
+		<p><em style="color: red">Unfortunately, the sample Gateway services on SCN were shut down starting with April 1st. A replacement demo service will be provided soon. Until then, we kindly ask you to use other OData endpoints for testing.</em></p>
+		
 		<p>Let's see what we did. The <code>gateway setup</code> command is the first command provided by our addon. It instructs Roo to add the relevant dependencies in the <em>pom.xml</em> file of our project, and a class that will handle connectivity to the NetWeaver Gateway services. If you are curious what's going on "under the hood", then open:
 		<ul>
 			<li>the <em>pom.xml</em> and search for <em>odata4j</em>. The found dependencies were added by our command.</li>
@@ -240,7 +242,7 @@ web mvc scaffold --class ~.web.TravelAgenciesController --backingType ~.domain.T
       	<p>What you could do now:</p>
 
       	<ul>
-			<li>Use the <a href="http://sapnwcloudlabs.github.com/nwcloud-roo-addon/">SAP Net Weaver Cloud Addon</a> to deploy your application on the Net Weaver Cloud. While doing so, please mind the fact that you must change <em>https</em> with <em>http</em> in the <em>SampleFlight.java</em> class from the <code>src\main\java\com\sap\research\connectivity</code> folder. This is due to a current limitation of the Net Weaver Cloud, for which we are expecting a fix.
+			<li>Use the <a href="http://sap.github.com/cloud-roo-addon/">SAP HANA Cloud Addon</a> to deploy your application on the HANA Cloud. While doing so, please mind the fact that you must change <em>https</em> with <em>http</em> in the <em>SampleFlight.java</em> class from the <code>src\main\java\com\sap\research\connectivity</code> folder. This is due to a current limitation of the HANA Cloud, for which we are expecting a fix.
       		<li>Import the Maven project into an IDE like Eclipse or STS and start modifying or extending it.</li>
       		<li>Create a mobile app that uses the web application as a backend by pushing/pulling data to/from it in JSON format using its REST interfaces.</li>
       		<li>Go to the <a href="http://www.springsource.org/spring-roo">Roo website</a> and find out more about Roo.</li>

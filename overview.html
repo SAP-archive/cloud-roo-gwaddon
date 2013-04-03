@@ -3,7 +3,7 @@
   <head>
     <meta charset='utf-8' />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="SAP NetWeaver Cloud Addon for Spring Roo - Overview" />
+    <meta name="description" content="SAP NetWeaver Gateway Connectivity Addon for Spring Roo - Overview" />
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
     <title>SAP NetWeaver Gateway Connectivity Addon for Spring Roo - Overview</title>
 	
@@ -26,7 +26,7 @@
     <!-- HEADER -->
     <div id="header_wrap" class="outer">
         <header class="inner">
-          <a id="forkme_banner" href="https://github.com/sapnwcloudlabs/nwcloud-roo-gwaddon">View on GitHub</a>
+          <a id="forkme_banner" href="https://github.com/SAP/cloud-roo-gwaddon">View on GitHub</a>
           <h1 id="project_title">SAP NetWeaver Gateway Connectivity Addon for Spring Roo</h1>
           <h2 id="project_tagline"><a href="index.html">Intro</a> | <a href="tutorial.html">Tutorial</a> | Overview</h2>
         </header>
@@ -53,8 +53,8 @@
       	<h3 id="software">Software</h3>
 
       	<ul>
-      	<li><a href="https://github.com/sapnwcloudlabs/nwcloud-roo-gwaddon">Roo addon</a> to configure projects for NetWeaver Gateway connectivity</li>
-      	<li><a href="nwcloud-roo-gwaddon-package.zip">ZIP package</a> of plugin/addon above (precompiled binaries) + installation instructions</li>
+      	<li><a href="https://github.com/SAP/cloud-roo-gwaddon">Roo addon</a> to configure projects for NetWeaver Gateway connectivity</li>
+      	<li><a href="roo-gwaddon-package.zip">ZIP package</a> of plugin/addon above (precompiled binaries) + installation instructions</li>
       	</ul>
 
       	<h3 id="instructions">Instructions</h3>
@@ -75,9 +75,12 @@ gateway field --entityClass --fieldName</code></pre>
 		      	<pre><code>gateway local field --entityClass --fieldName --fieldType
 gateway mvc adapt --entityClass</code></pre>
 		
+		<p>As per <em>Release 1.2.0</em>, the <code>gateway entity</code> command has been updated in order to accommodate entity associations:</p>
+				<pre><code>gateway entity --namespace --remoteEntitySet --import_all --import_associations</code></pre>
+
       	<h2 id="who-provides-this">Who did this?</h2>
 
-      	<p>The plugin and addon were initially developed by the "Enterprise Platforms Fabric" unit of <a href="http://www.sap.com/research">SAP Research</a> in Darmstadt, Germany as a small proof-of-concept work. As such the work is copyrighted by <a href="http://www.sap.com">SAP AG</a>, which kindly allowed its release to Open Source under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache License 2.0</a>. The software is provided as-is, and SAP AG does not provide any support in any way for it.</p>
+      	<p>The plugin and addon were initially developed inside the "Enterprise Platforms" group of <a href="http://www.sap.com/research">SAP Research</a> in Darmstadt, Germany as a small proof-of-concept work. As such the work is copyrighted by <a href="http://www.sap.com">SAP AG</a>, which kindly allowed its release to Open Source under the <a href="http://www.apache.org/licenses/LICENSE-2.0.html">Apache License 2.0</a>. The software is provided as-is, and SAP AG does not provide any support in any way for it.</p>
 
       </section>
     </div>
