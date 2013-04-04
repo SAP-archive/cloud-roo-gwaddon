@@ -13,13 +13,13 @@ connect your Roo-generated projects to "SAP Netweaver Gateway" systems. This add
 
 You can use Roo and the provided addon here to create in minutes a basic web application having (selected) entities connected to entities exposed by "SAP NetWeaver Gateway" systems. Roo generates 100% pure Java code, packaged as a standard Maven project, so it is easy to handle and extend. Import it in your favorite IDE like Eclipse and start extending it, or write a mobile app connecting to the REST interfaces to your data, that Roo can automatically create for you.
 
-In addition, you may use the [SAP NetWeaver Cloud Addon for Spring Roo](http://sapnwcloudlabs.github.com/nwcloud-roo-addon/) to deploy your application to [SAP NetWeaver Cloud](http://scn.sap.com/community/developer-center/cloud-platform), which is a Java-based Platform-as-a-Service (PaaS) provided by [SAP AG](http://www.sap.com/). Currently SAP AG provides a [free trial](http://scn.sap.com/docs/DOC-28197) of SAP NetWeaver Cloud, so it's easy to give it a try.
+In addition, you may use the [SAP HANA Cloud Addon for Spring Roo](http://sap.github.com/cloud-roo-addon/) to deploy your application to [SAP HANA Cloud](http://scn.sap.com/community/developer-center/cloud-platform), which is a Java-based Platform-as-a-Service (PaaS) provided by [SAP AG](http://www.sap.com/). Currently SAP AG provides a [free trial](http://scn.sap.com/docs/DOC-28197) of SAP HANA Cloud, so it's easy to give it a try.
 
 Whether you intend to create a REST back-end application which aggregates information from multiple data sources, or simply need a fast and headache-free way of connecting your application to "SAP NetWeaver Gateway" endpoints, learn how this addon can help you connect to business systems in just a few steps.
 
 As a final note, this addon is composed of two parts:
 
-- A standalone java application, which is used only at design time for retrieving metadata information
+- A standalone Java application, which is used only at design time for retrieving metadata information
 - The Roo addon itself
 
 Tutorial
@@ -27,7 +27,7 @@ Tutorial
 
 ### How to get started? ###
 
-We have prepared a tutorial that shows you how to install the addon and how to create a web application connected to a SAP NetWeaver Gateway service. The tutorial is available [here](http://sapnwcloudlabs.github.com/nwcloud-roo-gwaddon/tutorial.html).
+We have prepared a tutorial that shows you how to install the addon and how to create a web application connected to a SAP NetWeaver Gateway service. The tutorial is available [here](http://sap.github.com/cloud-roo-gwaddon/tutorial.html).
 
 
 Building, installing and using the addon
@@ -46,11 +46,11 @@ If you don't want to build the addon by yourself, but just use it, then please r
 
 ### Prerequisites ###
 
-Except for the [NWCloud-Maven-Plugin](https://github.com/sapnwcloudlabs/nwcloud-maven-plugin) (which is not mandatory), the prerequisites are similar to those of the [SAP NetWeaver Cloud Addon for Spring Roo](http://sapnwcloudlabs.github.com/nwcloud-roo-addon/). Please mind that the addon has been tested with Java versions 1.6 and 1.7.
+Except for the [HANA Cloud-Maven-Plugin](https://github.com/sap/cloud-maven-plugin) (which is not mandatory), the prerequisites are similar to those of the [SAP HANA Cloud Addon for Spring Roo](http://sap.github.com/cloud-roo-addon/). Please mind that the addon has been tested with Java versions 1.6 and 1.7.
 
 1. Building
 
-	You need to have a recent version of [Apache Maven](http://maven.apache.org/) installed and available on the path, so that you can issue the command `mvn` on the command prompt regardless of the directory you're currently in.
+    You need to have a recent version of [Apache Maven](http://maven.apache.org/) installed and available on the path, so that you can issue the command `mvn` on the command prompt regardless of the directory you're currently in.
 
 2. Installing
 
@@ -80,14 +80,14 @@ Alternatively, you could import the content of this folder as a java project in 
 
 After having built the OData Metadata Retriever application and the Roo addon, one must do the following:
 
-1. Copy the runnable jar from the __ODataMetadataRetriever/target/__ folder to your user home directory. This directory varies on Windows and Linux, but it is essential that the jar will reside here. Be sure that you got the correct jar, which should be named _com.sap.research.connectivity.gw.metadataretriever-1.1.0.RELEASE-jar-with-dependencies.jar_. Rename the file to _appToRetrieveOdataMetadata.jar_.
+1. Copy the runnable jar from the __ODataMetadataRetriever/target/__ folder to your user home directory. This directory varies on Windows and Linux, but it is essential that the jar will reside here. Be sure that you got the correct jar file, which should be named _com.sap.research.connectivity.gw.metadataretriever-1.2.0.RELEASE-jar-with-dependencies.jar_. Rename the file to _appToRetrieveOdataMetadata.jar_.
 
-   Please Note: _This java application is used only at design time, for retrieving metadata from the NetWeaver Gateway systems you are connecting to. It does not interact in any way with the running applications that you are going to generate using Roo and this addon. The access to this application was tested on Windows, Linux and Mac OS._
+   Please Note: _This Java application is used only at design time, for retrieving metadata from the NetWeaver Gateway systems you are connecting to. It does not interact in any way with the running applications that you are going to generate using Roo and this addon. The access to this application was tested on Windows, Linux and Mac OS._
 
 2. Go to the "target" subfolder of the __RooAddon__ folder, start a Roo shell and issue a command following this schema:
 
 
-	roo> osgi start --url file:///&#60;path-to-project-dir&#62;/target/com.sap.research.connectivity.gw-1.1.0.RELEASE.jar
+	roo> osgi start --url file:///&#60;path-to-project-dir&#62;/target/com.sap.research.connectivity.gw-1.2.0.RELEASE.jar
 
         Check the installed addon bundle using:
 
@@ -95,7 +95,7 @@ After having built the OData Metadata Retriever application and the Roo addon, o
 
         You should see a line like the following appearing in the shown list:
 
-	[  75] [Active     ] [    1] nwcloud-roo-gwaddon (1.1.0.RELEASE)
+	[  75] [Active     ] [    1] cloud-roo-gwaddon (1.2.0.RELEASE)
 
         If you want to uninstall the addon, then you could do this using the following command:
 
@@ -135,8 +135,14 @@ This command is available only after the _gateway setup_ command has been issued
         gateway entity --namespace        *<endpoint name>
                        --remoteEntitySet  *<entity set name, from the ones exposed through the specified endpoint>
                        --import_all       <whether to import all the fields or not - default is `true`>
+                       --import_associations <whether to import associations of the entity - default is `false`>
 
-Imports in the project the specified remote entity set. No data will be downloaded (i.e. local persistency is not used), just the support for CRUD operations on the specified entity. If the *import_all* flag is set to __false__, then only the key fields will be imported to the project. 
+Imports in the project the specified remote entity set. The support for CRUD operations on the specified entity will be generated. 
+
+If the *import_all* flag is set to __false__, then only the key fields will be imported to the project. 
+
+If the *import_associations* flag is set to __true__, then the associations of the specified entity are imported, as exposed by the OData endpoint. Full CRUD operations are supported for _one-to-one_ and _many-to-one_ associations and read-only for the rest. Please note that if an association points to an entity which has not been yet imported, then the association will not be imported either.
+
 This command is available only after at least one _odata endpoint_ has been defined.
 
         gateway field --entityClass  *<name of the entity where the field should be imported>
@@ -161,11 +167,11 @@ Adapts the mvc controller to handle properly local and remote fields. This comma
 
 #### So, what is this addon actually doing? ####
 
-In the current version, the addon gives the possibility of defining Roo entitities which use a NetWeaver Gateway entity set as persistency layer, rather than normal JPA. 
+In the current version, the addon gives the possibility of defining Roo entitities which use a NetWeaver Gateway  entity set as persistency layer, rather than normal JPA. 
 
 Ok, but then you might ask, why do I need to set up persistency first?
 
-Well, since Spring Roo’s generated applications rely on JPA persistency (any entity created in Spring Roo is a JPA-entity), one should issue the persistency setup commands before running any NetWeaver Gateway connectivity commands. No data is actually persisted. This is just a workaround for making maximum use of Roo's capabilities.
+Well, since Spring Roo’s generated applications rely on JPA persistency (any entity created in Spring Roo is a JPA-entity), one should issue the persistency setup commands before running any NetWeaver Gateway connectivity commands. Actually this is quite useful if you want to extend the Gateway-imported entities with custom fields or might want to make your own entity associations.
 
 #### Is there a list of features? ####
 
@@ -176,6 +182,7 @@ Let's try this one below, which is valid for the current version of the addon:
 - We provide support for composed keys.
 - When you define an entity, the keys are automatically imported, no need to specify them explicitly.
 - All NetWeaver Gateway simple types are supported for fields.
+- Associations with other Gateway-linked entities are supported. Full CRUD operations are supported for one-to-one and many-to-one associations and read-only for the rest.
 - An imported NetWeaver Gateway entity can have both imported and independent (local) fields.
 - [CSRF](http://en.wikipedia.org/wiki/Cross-site_request_forgery) support. 
 
@@ -187,10 +194,10 @@ Please keep in mind that the addon intends to provide a fast starting point for 
 
 In the current version, the most important limitations are:
 
-- Due to a current limitation of NetWeaver Cloud, connections over HTTPS to external systems will fail if the generated application is deployed to NetWeaver Cloud. We hope to see an update on this issue very soon.
+- Due to a current limitation of HANA Cloud, connections over HTTPS to external systems will fail if the generated application is deployed to HANA Cloud. We hope to see an update on this issue very soon.
+- Many-to-many and one-to-many associations with other Gateway-linked entities are not supported for write and update operations. This is due to a known limitation of the OData4j library. 
 - We do not process complex field types (such as records). These will be rendered as strings when imported.
 - Other field properties, such as length of visible name are not supported.
-- Relations with other entities (either JPA or NetWeaver Gateway) are not supported. 
 - No possibility of specifying read-only or hidden fields.
 
 Additional information
@@ -208,6 +215,10 @@ Contributions to this project are very welcome, but can only be accepted if the 
 
 Version history
 ---------------
+#### 1.2.0. RELEASE
+
+- Added support for (one-to-one and many-to-one) associations between Gateway-linked entities (a new boolean parameter --import_associations was added to the `gateway entity` command).
+- Bug Fixing
 
 #### 1.1.0. RELEASE
 

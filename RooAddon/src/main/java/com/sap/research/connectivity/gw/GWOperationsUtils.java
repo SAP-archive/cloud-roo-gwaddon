@@ -37,6 +37,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.logging.Logger;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -44,8 +45,14 @@ import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Reference;
 import org.springframework.roo.classpath.TypeLocationService;
 import org.springframework.roo.classpath.TypeManagementService;
+import org.springframework.roo.classpath.converters.JavaTypeConverter;
 import org.springframework.roo.classpath.details.annotations.AnnotationMetadataBuilder;
+import org.springframework.roo.classpath.operations.Cardinality;
+import org.springframework.roo.classpath.operations.Fetch;
+import org.springframework.roo.classpath.operations.FieldCommands;
 import org.springframework.roo.file.monitor.event.FileDetails;
+import org.springframework.roo.model.JavaSymbolName;
+import org.springframework.roo.model.JavaType;
 import org.springframework.roo.process.manager.FileManager;
 import org.springframework.roo.process.manager.MutableFile;
 import org.springframework.roo.project.Dependency;
@@ -66,6 +73,11 @@ import com.sap.research.connectivity.gw.parsers.MetadataXMLParser;
 @Component
 public class GWOperationsUtils {
 
+    /**
+     * Get hold of a JDK Logger
+     */
+    protected Logger log = Logger.getLogger(getClass().getName());
+    
 	protected static final char SEPARATOR = GwUtils.SEPARATOR;
 
     /**
@@ -98,6 +110,7 @@ public class GWOperationsUtils {
      * 
      * 
      */
+    
     
     /*
      * Used for sub-package path of the connectivity classes
@@ -229,28 +242,29 @@ public class GWOperationsUtils {
 	}
 
 
-	public Map<String, String> getFieldsOfRemoteEntity(String entityClassName, String nameSpace) {
-		Map<String, String> fields = new HashMap<String, String>();
+	public Map<String[], String> getFieldsOfRemoteEntity(String entityClassName, String nameSpace) {
+		Map<String[], String> fields = new HashMap<String[], String>();
 		String metaDataPath = getSubPackagePath(oDataFolder);
     	String metaDataFile = metaDataPath + SEPARATOR + nameSpace +"_metadata.xml";    
     	
     	InputStream metaDataIs = fileManager.getInputStream(metaDataFile);
     	
     	Document doc;
+    	MetadataXMLParser xmlParser;
     	
 		try {
 			doc = XmlUtils.getDocumentBuilder().parse(metaDataIs);
+			xmlParser = new MetadataXMLParser(doc, entityClassName);
+			xmlParser.parse();
 		} catch (Exception ex) {
 			  throw new IllegalStateException(ex);
-		}      	
-    	
-		MetadataXMLParser xmlParser = new MetadataXMLParser(doc, entityClassName);
-		xmlParser.parse();
+		}     	
+		
 		fields = xmlParser.getFields();
 		return fields;
 	}
 	
-	public void addRemoteFieldInPersistenceMethods(JavaSourceFileEditor entityClassFile, Map.Entry<String, String> fieldObj) {
+	public void addRemoteFieldInPersistenceMethods(JavaSourceFileEditor entityClassFile, Map.Entry<String[], String> fieldObj) {
 		ArrayList<JavaSourceMethod> globalMethodList = entityClassFile.getGlobalMethodList();
 		String pluralRemoteEntity = GwUtils.getInflectorPlural(entityClassFile.CLASS_NAME, Locale.ENGLISH);
 		String smallRemoteEntity = StringUtils.uncapitalize(entityClassFile.CLASS_NAME);
@@ -317,7 +331,7 @@ public class GWOperationsUtils {
 	}
 
 	
-	public void addPersistenceMethods(Map<String, String> fields, JavaSourceFileEditor entityClassFile, String remoteEntity, Map<String, String> keys) {
+	public void addPersistenceMethods(Map<String[], String> fields, JavaSourceFileEditor entityClassFile, String remoteEntity, Map<String[], String> keys) {
 	
 	    //  Persist
 		JavaSourceMethod persistMethod = new JavaSourceMethodBuilder()
@@ -378,7 +392,7 @@ public class GWOperationsUtils {
 											.methodName("count" + pluralRemoteEntity)
 											.methodPrefix("public static")
 											.returnType("long")
-											.methodBody(getCountMethodBody(fields, remoteEntity))
+											.methodBody(getCountMethodBody(remoteEntity))
 											.build();	
 		entityClassFile.addMethod(count);
 		
@@ -410,7 +424,7 @@ public class GWOperationsUtils {
 											.methodPrefix("public")
 											.returnType("void")
 											.annotations("@Transactional")
-											.methodBody(getRemoveMethodBody(fields, remoteEntity, keys))
+											.methodBody(getRemoveMethodBody(remoteEntity))
 											.build();
 		entityClassFile.addMethod(remove);		
 		
@@ -425,12 +439,29 @@ public class GWOperationsUtils {
 								.methodBody(getLocalRemoveMethodBody(remoteEntity))
 								.build();
 		entityClassFile.addMethod(localRemove);		
+		
+		JavaSourceMethod getRemoteEntity = new JavaSourceMethodBuilder()
+								.methodName("getRemote" + remoteEntity)
+								.methodPrefix("public static")
+								.returnType("OEntity")
+								.parameters(getFindMethodParameters())
+								.methodBody(getRemoteEntityMethodBody(remoteEntity))
+								.build();
+		entityClassFile.addMethod(getRemoteEntity);		
+
 	}
    
-	public String getRemoveMethodBody(Map<String, String> fields, String remoteEntity, Map<String, String> keys) {
+	private String getRemoteEntityMethodBody(String remoteEntity) {
+
+		String returnString =  "\t\tOEntityKey " + ODATA_KEY + " = OEntityKey.parse( " + GwUtils.GW_CONNECTION_FIELD_NAME + ".getDecodedRemoteKey(Id));\n" +
+				"\t\treturn " + GwUtils.GW_CONNECTION_FIELD_NAME + ".rooODataConsumer.getEntity(\"" + remoteEntity + "\", " + ODATA_KEY + ").execute();\n";
 		
-		String returnString = generateDecodedKey(2, "Id");
-		returnString += "\t\tOEntityKey " + ODATA_KEY + " = OEntityKey.parse(" + DECODED_KEY + ");\n";
+		return returnString;
+	}
+
+	public String getRemoveMethodBody(String remoteEntity) {
+		
+		String returnString = "\t\tOEntityKey " + ODATA_KEY + " = OEntityKey.parse(" + GwUtils.GW_CONNECTION_FIELD_NAME + ".getDecodedRemoteKey(Id));\n";
 		
 		returnString += "\t\t" + GwUtils.GW_CONNECTION_FIELD_NAME + ".rooODataConsumer.deleteEntity(\"" + remoteEntity +	"\", ODataKey).execute();\n" +
 				"\t\tlocalRemove();\n";		
@@ -451,17 +482,15 @@ public class GWOperationsUtils {
 		return returnString;
 	}
 
-	public String getMergeMethodBody(Map<String, String> fields, String remoteEntity, Map<String, String> keys) {
+	public String getMergeMethodBody(Map<String[], String> fields, String remoteEntity, Map<String[], String> keys) {
 		
-		String returnString = generateDecodedKey(2, "Id");
-		returnString += "\t\tOEntityKey " + ODATA_KEY + " = OEntityKey.parse(" + DECODED_KEY + ");\n";
+		String returnString = "\t\tOEntity remote" + remoteEntity + " = getRemote" + remoteEntity + "(Id);\n";
 		
-		returnString += "\t\tOEntity remote" + remoteEntity + " = " + GwUtils.GW_CONNECTION_FIELD_NAME + ".rooODataConsumer.getEntity(\"" + remoteEntity + 
-				"\", ODataKey).execute();\n";	
+		returnString += "\t\tOModifyRequest<OEntity> modifyEntityRequest = " + GwUtils.GW_CONNECTION_FIELD_NAME + 
+				".rooODataConsumer.updateEntity(remote" + remoteEntity +");\n";
+		returnString += "\t\tboolean modifyRequest = modifyEntityRequest\n";
 		
-		returnString += "\t\tboolean modifyRequest = " + GwUtils.GW_CONNECTION_FIELD_NAME + ".rooODataConsumer.updateEntity(remote" + remoteEntity +")\n";
-		
-		for (Map.Entry<String, String> field: fields.entrySet()){
+		for (Map.Entry<String[], String> field: fields.entrySet()){
 			/*
 			 * We do not update the key fields
 			 */
@@ -490,7 +519,7 @@ public class GWOperationsUtils {
 		return returnString;
 	}
 
-	public String getCountMethodBody(Map<String, String> fields, String remoteEntity) {
+	public String getCountMethodBody(String remoteEntity) {
 		
 		String smallRemoteEntity = StringUtils.uncapitalize(remoteEntity);
 		
@@ -506,29 +535,33 @@ public class GWOperationsUtils {
 		return returnString;
 	}
 
-	public String getFindMethodBody(Map<String, String> fields, String remoteEntity) {
+	public String getFindMethodBody(Map<String[], String> fields, String remoteEntity) {
 		
 		String smallRemoteEntity = StringUtils.uncapitalize(remoteEntity);
 		
-		String returnString = generateDecodedKey(2, "Id");
-		returnString += "\t\tOEntityKey " + ODATA_KEY + " = OEntityKey.parse(" + DECODED_KEY + ");\n";
-		
-		returnString += "\t\tOEntity " + smallRemoteEntity + " = " + GwUtils.GW_CONNECTION_FIELD_NAME + ".rooODataConsumer.getEntity(\"" + remoteEntity + "\", ODataKey).execute();\n";
+		String returnString = "\t\tOEntity " + smallRemoteEntity + " = getRemote" + remoteEntity + "(Id);\n";
 
-		returnString += "\t\t" + remoteEntity + " virtual" + remoteEntity + " = entityManager().find(" + remoteEntity + ".class, " + DECODED_KEY + ");\n";
+		returnString += "\t\t" + remoteEntity + " virtual" + remoteEntity + " = entityManager().find(" + remoteEntity + ".class, " + 
+				GwUtils.GW_CONNECTION_FIELD_NAME + ".getDecodedRemoteKey(Id));\n";
+						
 		returnString += "\t\tif (virtual" + remoteEntity + " == null)\n" +
 						"\t\t\tvirtual" + remoteEntity + " = new " + remoteEntity + "();\n";
 		
 		returnString += "\t\tDateTimeFormatter DTformatter = ISODateTimeFormat.dateHourMinuteSecondFraction();\n";
 		returnString += "\t\tDateTimeFormatter DTOformatter = ISODateTimeFormat.dateTime();\n";		
 		
-		for (Map.Entry<String, String> field: fields.entrySet()){
+		for (Map.Entry<String[], String> field: fields.entrySet()){
 			returnString += makeGWShowFieldCode("\t\t", "virtual" + remoteEntity, smallRemoteEntity, field);
 		}
 		
 		//returnString += "\t\t" + "virtual" + remoteEntity + ".setId(" + DECODED_KEY + ");\n";
 		//returnString += "\t\t" + remoteEntity + " local" + remoteEntity + " = entityManager().find(" + remoteEntity + ".class, " + DECODED_KEY + ");\n";
 
+		returnString += "\t\ttry {\n" +
+				"\t\t\t\n" +
+				"\t\t} catch (Exception relationshipsException) {\n" +
+				"\t\t\trelationshipsException.printStackTrace();\n" +
+				"\t\t};\n";
 		returnString += "\t\treturn " + "virtual" + remoteEntity + ";\n";
 		
 		return returnString;
@@ -575,7 +608,7 @@ public class GWOperationsUtils {
 		return parameters;
 	}
 
-	public String getfindAllMethodBody(Map<String, String> fields, Map<String, String> keys, String remoteEntity) {
+	public String getfindAllMethodBody(Map<String[], String> fields, Map<String[], String> keys, String remoteEntity) {
 		
 		String smallRemoteEntity = StringUtils.uncapitalize(remoteEntity);
 		
@@ -589,13 +622,13 @@ public class GWOperationsUtils {
 		returnString += "\t\t\tDateTimeFormatter DTformatter = ISODateTimeFormat.dateHourMinuteSecondFraction();\n";
 		returnString += "\t\t\tDateTimeFormatter DTOformatter = ISODateTimeFormat.dateTime();\n";
 		
-		for (Map.Entry<String, String> field: fields.entrySet()) {
+		for (Map.Entry<String[], String> field: fields.entrySet()) {
 				returnString += makeGWShowFieldCode("\t\t\t", smallRemoteEntity + "Instance", smallRemoteEntity + "Item", field);
 		}
-
+		
 		String instance = smallRemoteEntity + "Instance";
 		returnString += generateEncodedKey(keys, 3, instance);
-		returnString += generateDecodedKey(3, ODATA_KEY + ".toKeyString()");
+		returnString += "\t\t\tString " + DECODED_KEY + " = " + GwUtils.GW_CONNECTION_FIELD_NAME + ".getDecodedRemoteKey(" + ODATA_KEY + ".toKeyString());\n";
 		
 		/*
 		 * Here we deal with the local part (e.g. fields, if any)
@@ -611,6 +644,12 @@ public class GWOperationsUtils {
 				"\t\t\t\tlocal" + remoteEntity + " = entityManager().find(" + remoteEntity + ".class, " + DECODED_KEY + ");\n" +
 				"\t\t\t}\n";
 				
+		returnString += "\t\t\ttry {\n" +
+				"\t\t\t\t\n" +
+				"\t\t\t} catch (Exception relationshipsException) {\n" +
+				"\t\t\t\trelationshipsException.printStackTrace();\n" +
+				"\t\t\t};\n";
+		
 		returnString += "\t\t\tvirtual" + remoteEntity + "List.add(" + smallRemoteEntity + "Instance);\n";
 		returnString += "\t\t}\n";
 		returnString += "\n";
@@ -620,13 +659,16 @@ public class GWOperationsUtils {
 		return returnString;
 	}
 
-   public String getPersistMethodBody(Map<String, String> fields, Map<String, String> keys, String remoteEntity) {
+   public String getPersistMethodBody(Map<String[], String> fields, Map<String[], String> keys, String remoteEntity) {
 	   
 		String returnString = "\t\tOEntity newEntity;\n";
 		returnString += "\n";
-		returnString += "\t\tnewEntity = " + GwUtils.GW_CONNECTION_FIELD_NAME + ".rooODataConsumer.createEntity(\"" + remoteEntity +"\")\n";
+		returnString += "\t\tOCreateRequest<OEntity> newEntityRequest = " + GwUtils.GW_CONNECTION_FIELD_NAME + ".rooODataConsumer.createEntity(\"" + 
+							remoteEntity +"\");\n";
+		returnString += "\n";
+		returnString += "\t\tnewEntity = newEntityRequest\n";
 		
-		for (Map.Entry<String, String> field: fields.entrySet()){
+		for (Map.Entry<String[], String> field: fields.entrySet()){
 			returnString += makeGWPersistFieldCode("\t\t\t", field);
 		}
 		
@@ -636,6 +678,10 @@ public class GWOperationsUtils {
 		 * Commented, as when writing to the local persistence db we don't need urlencoding
 		 */
 		//returnString += generateEncodedKey(keys, 2, "");
+		
+		for (Map.Entry<String[], String> keyField: keys.entrySet()){
+			returnString += makeGWShowFieldCode("\t\t","this", "newEntity", keyField);
+		}
 		
 		returnString += generateDBKeyFromODataKeys(keys, "\t\t", "");
 		returnString += "\t\tsetId(" + ODATA_KEY + ".toKeyString());\n";
@@ -649,7 +695,7 @@ public class GWOperationsUtils {
 		return returnString;
   }
    
-   public String generateEncodedKey(Map<String, String> keys, int numberOfTabs, String instance) {
+   public String generateEncodedKey(Map<String[], String> keys, int numberOfTabs, String instance) {
 	   
 	   String returnString = "\n";
 	   String tabs = "";
@@ -665,9 +711,7 @@ public class GWOperationsUtils {
 	   
 	   returnString += generateDBKeyFromODataKeys(keys, tabs, instanceMethod);
 	   
-	   returnString += generateURLEncodingCode("ODataKey.toKeyString()", tabs);
-	   
-	   returnString += tabs + instanceMethod + "setId(" + ENCODED_KEY + ");\n";
+	   returnString += tabs + instanceMethod + "setId(" + GwUtils.GW_CONNECTION_FIELD_NAME + ".getEncodedRemoteKey(" + ODATA_KEY +".toKeyString()));\n";
 	   
 	   return returnString;
    }
@@ -683,13 +727,15 @@ public class GWOperationsUtils {
    }
    
  
-   private String generateDBKeyFromODataKeys(Map<String, String> keys, String tabs, String instanceMethod) {
+   private String generateDBKeyFromODataKeys(Map<String[], String> keys, String tabs, String instanceMethod) {
 	String returnString;
 	String keyBuilderString = "";
 	String separator = "";
-	for(Map.Entry<String, String> key: keys.entrySet()){
-		keyBuilderString += separator + "\"" + key.getKey() + "\", ";
-		keyBuilderString += instanceMethod + "get" + key.getKey() + "().toString()";
+	for(Map.Entry<String[], String> key: keys.entrySet()){
+		String remoteFieldName = key.getKey()[0];
+		String localFieldName = key.getKey()[1];
+		keyBuilderString += separator + "\"" + remoteFieldName + "\", ";
+		keyBuilderString += instanceMethod + "get" + StringUtils.capitalize(localFieldName) + "()";
 		separator = ",";
 	}
    
@@ -714,21 +760,22 @@ public class GWOperationsUtils {
 	   return returnString;
    }   
 
-   private String makeGWShowFieldCode(String tabLevels, String entityName, String remoteEntity, Map.Entry<String, String> field) {
+   private String makeGWShowFieldCode(String tabLevels, String entityName, String remoteEntity, Map.Entry<String[], String> field) {
 		String startCast = "", endCast = "", returnString = "";
-		String fieldName = field.getKey();
+		String remoteFieldName = field.getKey()[0];
+		String localFieldName = field.getKey()[1];
 		
 		if (field.getValue().equals("DateTime")) {
-			returnString = tabLevels + "DateTime " + fieldName.toLowerCase() + "DT = DTformatter.parseDateTime(" + remoteEntity + 
-					".getProperty(\"" + fieldName  + "\").getValue().toString());\n";	
-			returnString += tabLevels + "Date " + fieldName.toLowerCase() + "ConvertedDate = " +  fieldName.toLowerCase() + "DT.toDate();\n";
-			returnString += tabLevels + entityName + ".set" + fieldName + "(" + fieldName.toLowerCase() + "ConvertedDate);\n";			
+			returnString = tabLevels + "DateTime " + localFieldName.toLowerCase() + "DT = DTformatter.parseDateTime(" + remoteEntity + 
+					".getProperty(\"" + remoteFieldName  + "\").getValue().toString());\n";	
+			returnString += tabLevels + "Date " + localFieldName.toLowerCase() + "ConvertedDate = " +  localFieldName.toLowerCase() + "DT.toDate();\n";
+			returnString += tabLevels + entityName + ".set" + StringUtils.capitalize(localFieldName) + "(" + localFieldName.toLowerCase() + "ConvertedDate);\n";			
 
 		} else if(field.getValue().equals("DateTimeOffset")) {
-			returnString = tabLevels + "DateTime " + fieldName.toLowerCase() + "DT = DTOformatter.parseDateTime(" + remoteEntity + 
-					".getProperty(\"" + fieldName  + "\").getValue().toString());\n";	
-			returnString += tabLevels + "Date " + fieldName.toLowerCase() + "ConvertedDate = " +  fieldName.toLowerCase() + "DT.toDate();\n";
-			returnString += tabLevels + entityName + ".set" + fieldName + "(" + fieldName.toLowerCase() + "ConvertedDate);\n";
+			returnString = tabLevels + "DateTime " + localFieldName.toLowerCase() + "DT = DTOformatter.parseDateTime(" + remoteEntity + 
+					".getProperty(\"" + remoteFieldName  + "\").getValue().toString());\n";	
+			returnString += tabLevels + "Date " + localFieldName.toLowerCase() + "ConvertedDate = " +  localFieldName.toLowerCase() + "DT.toDate();\n";
+			returnString += tabLevels + entityName + ".set" + StringUtils.capitalize(localFieldName) + "(" + localFieldName.toLowerCase() + "ConvertedDate);\n";
 			
 		} else {
 			String javaType = GwUtils.odataToJavaType(field.getValue());			
@@ -736,8 +783,8 @@ public class GWOperationsUtils {
 			if (!startCast.isEmpty())
 				endCast = ")";
 			
-			returnString =  tabLevels + entityName + ".set" + fieldName + "(" + startCast + remoteEntity + ".getProperty(\""
-				+ fieldName + "\").getValue().toString()" + endCast + ");\n";
+			returnString =  tabLevels + entityName + ".set" + StringUtils.capitalize(localFieldName) + "(" + startCast + remoteEntity + ".getProperty(\""
+				+ remoteFieldName + "\").getValue().toString()" + endCast + ");\n";
 		}
 		
 		return returnString;
@@ -745,8 +792,8 @@ public class GWOperationsUtils {
 
    private String makeLocalShowFieldCode(String tabLevels, String entityName, String remoteEntity, String fieldName) {
 
-		String returnString =  entityName + ".set" + fieldName + "(local" + remoteEntity + "== null ? null : local" + remoteEntity 
-				+ ".get" + fieldName + "());\n" + tabLevels;
+		String returnString =  entityName + ".set" + StringUtils.capitalize(fieldName) + "(local" + remoteEntity + "== null ? null : local" + remoteEntity 
+				+ ".get" + StringUtils.capitalize(fieldName) + "());\n" + tabLevels;
 		
 		return returnString;
    }	
@@ -768,7 +815,8 @@ public class GWOperationsUtils {
 	   connectivityImports.add("java.util.Date");
 	   connectivityImports.add("java.util.Calendar");
 	   connectivityImports.add("org.odata4j.core.OQueryRequest");
-	   
+	   connectivityImports.add("org.odata4j.core.OCreateRequest");
+	   connectivityImports.add("org.odata4j.core.OModifyRequest");
 	   connectivityImports.add("org.odata4j.core.OEntityKey");
 	   
 	   connectivityImports.add("javax.persistence.Temporal");
@@ -806,34 +854,35 @@ public class GWOperationsUtils {
 	   entityClassFile.addImports(connectivityImports);	   
    }
 
-	public void addGatewayFields(Map<String, String> keys, Map<String, String> fields, JavaSourceFileEditor entityClassFile) throws Exception{
+	public void addGatewayFields(Map<String[], String> keys, Map<String[], String> fields, JavaSourceFileEditor entityClassFile) throws Exception{
 
 		// Add Keys 
-        for (Map.Entry<String, String> key: keys.entrySet()) {
+        for (Map.Entry<String[], String> key: keys.entrySet()) {
             addKeyInGWJavaFile(keys, entityClassFile, key);		
         }		
  		 
         // Add Fields
         if (!fields.isEmpty()) {
-	        for (Map.Entry<String, String> field: fields.entrySet()) {
+	        for (Map.Entry<String[], String> field: fields.entrySet()) {
 	        	 addRemoteFieldInGWJavaFile(entityClassFile, field);	
 	     	     addRemoteFieldInPersistenceMethods(entityClassFile, field);
 	          }
         }
 	}
 
-	public void addKeyInGWJavaFile(Map<String, String> keys, JavaSourceFileEditor entityClassFile, Map.Entry<String, String> key) {
+	public void addKeyInGWJavaFile(Map<String[], String> keys, JavaSourceFileEditor entityClassFile, Map.Entry<String[], String> key) {
 		//Map ODataFieldTypes to JavaTypes 
 		String oDataType = key.getValue();
 		String javaType = GwUtils.odataToJavaType(oDataType);
 		
+		String localFieldName = key.getKey()[1];
 		JavaSourceFieldBuilder fieldBuilder = new JavaSourceFieldBuilder()
 													.fieldPrefix("private")
 													.fieldType(javaType)
-													.fieldName(key.getKey())
+													.fieldName(localFieldName)
 													.fieldValue("");
 		
-		if (key.getKey().equals("Id"))
+		if (localFieldName.equals("Id"))
 			fieldBuilder = fieldBuilder.fieldAnnotations("@Id\n\t@Column(name = \"id\")");
 		// \t@GeneratedValue(strategy = GenerationType.AUTO)\n
 		
@@ -843,34 +892,34 @@ public class GWOperationsUtils {
 		JavaSourceField fieldDeclaration = fieldBuilder.build();		
 
 		entityClassFile.addGlobalField(fieldDeclaration);
-      
-		if (!key.getKey().equals("Id")) {
+		
+		if (!localFieldName.equals("Id")) {
 			JavaSourceMethod getMethod = new JavaSourceMethodBuilder()
-												.methodName("get"+key.getKey())
+												.methodName("get"+StringUtils.capitalize(localFieldName))
 												.methodPrefix("public")
 												.returnType(javaType)
-												.methodBody("\t\t" + "return" + " " + "this." + key.getKey() + ";\n")
+												.methodBody("\t\t" + "return" + " " + "this." + localFieldName + ";\n")
 												.build(); 
 			entityClassFile.addMethod(getMethod);
 			
 			ArrayList<String> parameters = new ArrayList<String>();
-			parameters.add(javaType + " " + key.getKey());
+			parameters.add(javaType + " " + localFieldName);
 			
 			JavaSourceMethod setMethod = new JavaSourceMethodBuilder()
-												.methodName("set"+key.getKey())
+												.methodName("set"+StringUtils.capitalize(localFieldName))
 												.methodPrefix("public")
 												.returnType("void")
 											    .parameters(parameters)												
-												.methodBody("\t\t" + "this." + key.getKey() + " = " + key.getKey() + ";\n")
+												.methodBody("\t\t" + "this." + localFieldName + " = " + localFieldName + ";\n")
 												.build(); 
 			
 			entityClassFile.addMethod(setMethod);
 		}
 	}
 	
-	public void addRemoteFieldInGWJavaFile(JavaSourceFileEditor entityClassFile, Map.Entry<String, String> field) throws Exception{
+	public void addRemoteFieldInGWJavaFile(JavaSourceFileEditor entityClassFile, Map.Entry<String[], String> field) throws Exception{
 		
-		String fieldName = field.getKey();
+		String fieldName = field.getKey()[1];
 		//Map ODataFieldTypes to JavaTypes 
 		String oDataType = field.getValue();
 		String javaType = GwUtils.odataToJavaType(oDataType);
@@ -880,19 +929,20 @@ public class GWOperationsUtils {
 
 	
 	public void addFieldInGWJavaFile(JavaSourceFileEditor entityClassFile, String fieldName, String javaType) throws Exception {
-		addFieldInGWJavaFile(entityClassFile, fieldName, javaType, "");
+		addFieldInGWJavaFile(entityClassFile, fieldName, "", javaType, "");
 	}
 	
-	private void addFieldInGWJavaFile(JavaSourceFileEditor entityClassFile, String fieldName, String javaType, String annotations) throws Exception {
+	private void addFieldInGWJavaFile(JavaSourceFileEditor entityClassFile, String fieldName, String fieldValue, String javaType, String annotations) throws Exception {
 		JavaSourceFieldBuilder fieldBuilder = new JavaSourceFieldBuilder()
 									    		.fieldPrefix("private")
 									    		.fieldType(javaType)
 									    		.fieldName(fieldName)
-									    		.fieldValue("");
+									    		.fieldValue(fieldValue);
 		
 		if (javaType.toLowerCase().contains("date") || javaType.toLowerCase().contains("calendar"))
-			fieldBuilder = fieldBuilder.fieldAnnotations(annotations + "\n\t" + "@Temporal(TemporalType.TIMESTAMP)\n\t@DateTimeFormat(style=\"M-\")");
+			annotations += "\n\t" + "@Temporal(TemporalType.TIMESTAMP)\n\t@DateTimeFormat(style=\"M-\")";
 		
+		fieldBuilder = fieldBuilder.fieldAnnotations(annotations);
 		JavaSourceField fieldDeclaration = fieldBuilder.build();
 		
 		if (entityClassFile.fieldExists(fieldDeclaration.getFieldName()))
@@ -901,7 +951,7 @@ public class GWOperationsUtils {
 		entityClassFile.addGlobalField(fieldDeclaration);
       
 		JavaSourceMethod getMethod = new JavaSourceMethodBuilder()
-											.methodName("get"+fieldName)
+											.methodName("get"+StringUtils.capitalize(fieldName))
 											.methodPrefix("public")
 											.returnType(javaType)
 											.methodBody("\t\t" + "return" + " " + "this." + fieldName + ";\n")
@@ -912,7 +962,7 @@ public class GWOperationsUtils {
 		parameters.add(javaType + " " + fieldName);
 		
 		JavaSourceMethod setMethod = new JavaSourceMethodBuilder()
-											.methodName("set"+fieldName)
+											.methodName("set"+StringUtils.capitalize(fieldName))
 											.methodPrefix("public")
 											.returnType("void")
 										    .parameters(parameters)												
@@ -922,8 +972,10 @@ public class GWOperationsUtils {
 		entityClassFile.addMethod(setMethod);
 	}
 
-	private String makeGWPersistFieldCode(String tabLevels, Map.Entry<String, String> fieldObj) {
+	private String makeGWPersistFieldCode(String tabLevels, Map.Entry<String[], String> fieldObj) {
 		String reversedCast = "", dateTimeOffsetCastStart = "", dateTimeOffsetCastEnd = "";
+		String remoteFieldName = fieldObj.getKey()[0];
+		String localFieldName = fieldObj.getKey()[1];
 		if (fieldObj.getValue().equals("DateTimeOffset")) {
 			reversedCast = "datetimeOffset";
 			dateTimeOffsetCastStart = "new DateTime(";
@@ -933,18 +985,18 @@ public class GWOperationsUtils {
 			reversedCast = GwUtils.generateReversedCast(GwUtils.odataToJavaType(fieldObj.getValue()));
 		}
 		
-		return tabLevels + ".properties(OProperties." + reversedCast + "(\"" + fieldObj.getKey() + "\", " + dateTimeOffsetCastStart + "get" 
-				+ StringUtils.capitalize(fieldObj.getKey()) + "()" + dateTimeOffsetCastEnd + "))\n";
+		return tabLevels + ".properties(OProperties." + reversedCast + "(\"" + remoteFieldName + "\", " + dateTimeOffsetCastStart + "get" 
+				+ StringUtils.capitalize(localFieldName) + "()" + dateTimeOffsetCastEnd + "))\n";
 	}
 	
-	public Map.Entry<String, String> getValidatedField(String localClassName, String fieldName, JavaSourceFileEditor entityClassFile) throws Exception {
-		Map.Entry<String, String> fieldObj = null;
+	public Map.Entry<String[], String> getValidatedField(String localClassName, String fieldName, JavaSourceFileEditor entityClassFile) throws Exception {
+		Map.Entry<String[], String> fieldObj = null;
 		if (!entityClassFile.fieldExists(fieldName)) {
     	   String nameSpace = GwUtils.getNamespaceFromClass(entityClassFile);
-    	   Map<String, String> fields = getFieldsOfRemoteEntity(localClassName, nameSpace);
+    	   Map<String[], String> fields = getFieldsOfRemoteEntity(localClassName, nameSpace);
 		
-    	   for(Map.Entry<String, String> field : fields.entrySet()){
-    		   if (field.getKey().equals(fieldName)) {
+    	   for(Map.Entry<String[], String> field : fields.entrySet()){
+    		   if (field.getKey()[0].equals(fieldName)) {
     			   fieldObj = field;
     			   break;
     		   }
@@ -974,4 +1026,175 @@ public class GWOperationsUtils {
 		return false;
 	}
 	
+	public void addRelationships(Map<String, String[]> relationships, String remoteEntityName, JavaSourceFileEditor entityClassFile) throws Exception {
+		//TODO: still to add many to many relationships in persistence methods !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		if (relationships.isEmpty())
+			return;
+		
+		entityClassFile.addImport("javax.persistence.CascadeType");
+		entityClassFile.addImport("org.odata4j.core.OLink");
+		entityClassFile.addImport("org.odata4j.core.OLinks");
+		
+		for (Map.Entry<String, String[]> relation : relationships.entrySet()) {
+			int currentEntityIndex = relation.getValue()[0].equals(remoteEntityName) ? 0 : 2;
+			
+			String fieldName = relation.getKey();
+			String fieldValue = "";
+			String javaType = relation.getValue()[2 - currentEntityIndex];
+			
+			if (getJavaFileEditor(domain, javaType, false) != null) {
+			/*
+			 * We process the types of association (many to many, many to one, one to one, one to many)
+			 */
+				String associationType = "";
+				String multiplicityEnd1 = relation.getValue()[currentEntityIndex].contains("1") ? "One" : "Many";
+				String multiplicityEnd2 = relation.getValue()[3 - currentEntityIndex].contains("1") ? "One" : "Many";
+				associationType = multiplicityEnd1 + "To" + multiplicityEnd2;
+
+				addRelationshipInPersistenceMethods(entityClassFile, fieldName, javaType, associationType);
+				
+				if (multiplicityEnd2.equals("Many")) {
+					entityClassFile.addImport("java.util.HashSet");
+					entityClassFile.addImport("java.util.Set");
+					javaType = "Set<"+javaType+">";
+					fieldValue = "new Hash"+javaType+"()";
+				}
+			
+				entityClassFile.addImport("javax.persistence." + associationType);
+				addFieldInGWJavaFile(entityClassFile, fieldName, fieldValue, javaType, "@" + associationType);
+			}
+		}
+		
+	}
+	
+	private void addRelationshipInPersistenceMethods(JavaSourceFileEditor entityClassFile, String nav, String javaType, String associationType) {
+		// TODO Auto-generated method stub
+		ArrayList<JavaSourceMethod> globalMethodList = entityClassFile.getGlobalMethodList();
+		String pluralRemoteEntity = GwUtils.getInflectorPlural(entityClassFile.CLASS_NAME, Locale.ENGLISH);
+		String smallRemoteEntity = StringUtils.uncapitalize(entityClassFile.CLASS_NAME);
+		
+		for (JavaSourceMethod method : globalMethodList) {
+			String methodName = method.getMethodName();
+			/*
+			 * We insert the relation in the persist and merge methods
+			 */
+			if (methodName.endsWith("persist")) {
+				StringBuffer methodBody = new StringBuffer(method.getMethodBody());
+				methodBody.insert(methodBody.lastIndexOf("newEntity = newEntityRequest"), 
+						makeGWPersistRelationshipCode(nav, javaType, associationType, "\t\t"));
+				method.setMethodBody(methodBody.toString());
+			}
+			else if (methodName.endsWith("merge")) {
+				StringBuffer methodBody = new StringBuffer(method.getMethodBody());
+				methodBody.insert(methodBody.lastIndexOf("boolean modifyRequest = modifyEntityRequest"), 
+						makeGWMergeRelationshipCode(nav, javaType, associationType, "\t\t"));
+				method.setMethodBody(methodBody.toString());
+			}
+			
+			/*
+			 * We insert the relation in the findAll and find<Entity>Entries methods
+			 */
+			else if (methodName.endsWith("findAll" + pluralRemoteEntity) || methodName.endsWith("find" + entityClassFile.CLASS_NAME + "Entries")) {
+				StringBuffer methodBody = new StringBuffer(method.getMethodBody());
+				int insertPosition = methodBody.indexOf("} catch (Exception relationshipsException)");
+				boolean isFirstManyToMany = true;
+				if ("OneToMany ManyToMany".contains(associationType)) {
+					String manyToManyInsertReferenceString = StringUtils.uncapitalize(entityClassFile.CLASS_NAME) + "Link.isCollection()) {";
+					if (methodBody.indexOf(manyToManyInsertReferenceString) > -1) {
+						insertPosition = methodBody.indexOf(manyToManyInsertReferenceString);
+						isFirstManyToMany = false;
+					}
+				}
+				methodBody.insert(insertPosition, 
+						makeGWShowRelationshipCode(entityClassFile.CLASS_NAME, smallRemoteEntity + "Instance", smallRemoteEntity + "Item", ODATA_KEY, 
+								nav, javaType, associationType, "\t\t", isFirstManyToMany));
+				method.setMethodBody(methodBody.toString());
+			}
+			/*
+			 * We insert the relation in the find<Entity> method
+			 */
+			else if (methodName.endsWith("find" + entityClassFile.CLASS_NAME)) {
+				StringBuffer methodBody = new StringBuffer(method.getMethodBody());
+				int insertPosition = methodBody.indexOf("} catch (Exception relationshipsException)");
+				boolean isFirstManyToMany = true;
+				if ("OneToMany ManyToMany".contains(associationType)) {
+					String manyToManyInsertReferenceString = StringUtils.uncapitalize(entityClassFile.CLASS_NAME) + "Link.isCollection()) {";
+					if (methodBody.indexOf(manyToManyInsertReferenceString) > -1) {
+						insertPosition = methodBody.indexOf(manyToManyInsertReferenceString);
+						isFirstManyToMany = false;
+					}
+				}
+				methodBody.insert(insertPosition, 
+						makeGWShowRelationshipCode(entityClassFile.CLASS_NAME, "virtual" + entityClassFile.CLASS_NAME, smallRemoteEntity,
+								"OEntityKey.parse(" + GwUtils.GW_CONNECTION_FIELD_NAME + ".getDecodedRemoteKey(Id))", 
+								nav, javaType, associationType, "\t\t\t", isFirstManyToMany));
+				method.setMethodBody(methodBody.toString());
+			}
+		}
+	}
+
+	private String makeGWMergeRelationshipCode(String nav, String javaType, String associationType, String tabs) {
+		String returnString = "";
+		if ("ManyToOne OneToOne".contains(associationType)) {
+			returnString += "OEntity linked" + javaType + " = " + GwUtils.GW_CONNECTION_FIELD_NAME + ".rooODataConsumer.getEntity(\"" + 
+						javaType + "\", " + javaType + ".getRemote" + javaType + "(" + nav + ".getId())).execute();\n";
+			returnString += tabs + "modifyEntityRequest = modifyEntityRequest.link(\"" + nav + "\", linked" + javaType + ");\n" + tabs;
+		}
+		
+		return returnString;
+	}
+	
+	private String makeGWPersistRelationshipCode(String nav, String javaType, String associationType, String tabs) {
+		String returnString = "";
+		if ("ManyToOne OneToOne".contains(associationType)) {
+			returnString += "OEntity linked" + javaType + " = " + GwUtils.GW_CONNECTION_FIELD_NAME + ".rooODataConsumer.getEntity(\"" + 
+						javaType + "\", " + javaType + ".getRemote" + javaType + "(" + nav + ".getId())).execute();\n";
+			returnString += tabs + "newEntityRequest = newEntityRequest.link(\"" + nav + "\", linked" + javaType + ");\n" + tabs;
+		}
+		
+		return returnString;
+	}
+
+	private String makeGWShowRelationshipCode(String className, String virtualLocalEntityInstance, String remoteEntity, String remoteId, String nav, String javaType, 
+			String associationType, String tabs, boolean isFirstManyToMany) {
+		String smallClassName = StringUtils.uncapitalize(className);
+		String capitalNav = StringUtils.capitalize(nav);
+		String returnString = "";
+		if ("ManyToOne OneToOne".contains(associationType)) {
+			returnString += "OEntity remote" + javaType + " = " + GwUtils.GW_CONNECTION_FIELD_NAME + ".rooODataConsumer.getEntity(\"" +
+						className + "\", " + remoteId + ").nav(\"" + nav + 
+						"\").execute();\n";
+			returnString += tabs + javaType + " virtual" + javaType + " = " + javaType + ".find" + javaType + "(remote" + javaType + 
+						".getEntityKey().toKeyString());\n" ;
+			returnString += tabs + virtualLocalEntityInstance + ".set" + javaType + "(virtual" + javaType + ");\n" + tabs;
+		} else {
+			String extraReturn = "";
+			if (isFirstManyToMany) {
+				returnString += "List<OLink> " + smallClassName + "Links = " + remoteEntity + ".getLinks();\n" +
+						tabs + "\tfor(OLink " + smallClassName + "Link : " + smallClassName + "Links) {\n" +
+						tabs + "\t\tif (" + smallClassName + "Link.isCollection()) {\n";
+				extraReturn = "\n";
+			}
+				
+			returnString +=	extraReturn + tabs + "\t\t\tif (" + smallClassName + "Link.getTitle().equals(\"" + nav + "\")) {\n" +
+					tabs + "\t\t\t\tSet<" + javaType + "> virtual" + javaType + "List = new HashSet<" + javaType + ">();\n" +
+					tabs + "\t\t\t\tList<OEntity> remote" + javaType + "List = " + GwUtils.GW_CONNECTION_FIELD_NAME + ".rooODataConsumer.getEntities(" +
+							"OLinks.relatedEntities(" + smallClassName + "Link.getRelation(), " + smallClassName + "Link.getTitle(), " + 
+							smallClassName + "Link.getHref()))\n" +
+					tabs + "\t\t\t\t.execute().toList();\n" +
+					tabs + "\t\t\t\tfor (OEntity remote" + javaType + " : remote" + javaType + "List) {\n" +
+					tabs + "\t\t\t\t\t" + javaType + " virtual" + javaType + " = " + javaType + ".find" + javaType + "(remote" + javaType + 
+							".getEntityKey().toKeyString());\n" +
+					tabs + "\t\t\t\t\tvirtual" + javaType + "List.add(virtual" + javaType + ");\n" +
+					tabs + "\t\t\t\t}\n" +
+					tabs + "\t\t\t\t" + virtualLocalEntityInstance + ".set" + capitalNav + "(virtual" + javaType + "List);\n" +
+					tabs + "\t\t\t}\n";
+			
+			if (isFirstManyToMany)				
+				returnString += tabs + "\t\t}\n" +
+					tabs + "}\n" + tabs;
+		}
+		
+		return returnString;
+	}
 }

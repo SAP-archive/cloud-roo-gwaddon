@@ -129,8 +129,11 @@ public class GwOperationsImpl extends GWOperationsUtils implements GwOperations 
 	public void addNamespace(String nsName, String url, String user, String pass, String csrfMode, String host, String port, int timeout) throws Exception {
 		
 		String metadataString = "";
-		
-		metadataString = getMetadataString(url, user, pass, host, port, timeout);
+		try {
+			metadataString = getMetadataString(url, user, pass, host, port, timeout);
+		} catch (Exception e) {
+			throw new Exception(e.getMessage());
+		}
 
 		if (metadataString.isEmpty())
 			throw new Exception("The specified URL did not return any valid data!");
@@ -237,13 +240,64 @@ public class GwOperationsImpl extends GWOperationsUtils implements GwOperations 
         typeManagementService.createOrUpdateTypeOnDisk(cidBuilder.build());
     }
     
-    public void addFieldsAndMethods(final String namespace, String remoteEntity, boolean importAll) throws Exception{
+    public void addFieldsMethodsAndRelations(final String namespace, String remoteEntity, boolean importAll, boolean importAssociations) throws Exception{
     	
     //   Extract fields and keys from Metadata XML
-		 Map<String, String> fields = new HashMap<String, String>();
-		 Map<String, String> keys = new HashMap<String, String>();
-		 Map<String, String> allFields = new HashMap<String, String>();
+		 Map<String[], String> fields = new HashMap<String[], String>();
+		 Map<String[], String> keys = new HashMap<String[], String>();
+		 Map<String[], String> allFields = new HashMap<String[], String>();
 		  
+		 MetadataXMLParser xmlParser = getXMLParser(namespace, remoteEntity);
+		 xmlParser.parse();
+		 
+	//   Get handler for File Editor to edit the entity file  
+         JavaSourceFileEditor entityClassFile = getJavaFileEditor(domain, remoteEntity); 
+ 		 
+ 	//   Add Imports 
+ 		 addImports(entityClassFile, namespace);
+ 		 
+		 if (importAll)
+			 fields = xmlParser.getFields();
+		 
+		 keys = xmlParser.getKeys();
+         
+    //   Add Field declaration for OData Connector
+         JavaSourceField odc = new JavaSourceFieldBuilder()
+											.fieldPrefix("private final static")
+											.fieldType("ODataConnectivity")
+											.fieldName(GwUtils.GW_CONNECTION_FIELD_NAME)
+											.fieldValue("new " + namespace + "()")
+											.build();
+
+         entityClassFile.addGlobalField(odc); 
+         
+    //   Add Fields and corresponding getter/setters methods to the Entity Class
+         Map<String[], String> keysIncludingId = new HashMap<String[], String>();
+         // Include id as a key(type String)
+         String[] idKeyName = {"Id", "Id"}; 
+         keysIncludingId.put(idKeyName, "String");
+         keysIncludingId.putAll(keys);
+         
+         addGatewayFields(keysIncludingId, fields, entityClassFile); 
+
+    //   Add Persistence Methods
+    // Send all the fields (keys plus fields)
+         allFields.putAll(keys);
+         allFields.putAll(fields);
+         addPersistenceMethods(allFields, entityClassFile, remoteEntity, keys);
+         
+    //  Add relationships
+         if (importAssociations) {
+        	 Map<String, String[]> relationships = new HashMap<String, String[]>();
+    		 relationships = xmlParser.getRelationships();
+    		 addRelationships(relationships, remoteEntity, entityClassFile);
+         }
+		 
+         entityClassFile.makeFile();
+//       throw new Exception(entityClassFile.getFileContent());
+   }
+
+	private MetadataXMLParser getXMLParser(final String namespace, String remoteEntity) throws IllegalStateException {
 		 String metaDataPath = getSubPackagePath(oDataFolder);
 		 String metaDataFile = metaDataPath + SEPARATOR + namespace +"_metadata.xml";
 		  
@@ -258,46 +312,8 @@ public class GwOperationsImpl extends GWOperationsUtils implements GwOperations 
 		 }         
          
 		 MetadataXMLParser xmlParser = new MetadataXMLParser(doc, remoteEntity);
-		 xmlParser.parse();
-		 
-		 if (importAll)
-			 fields = xmlParser.getFields();
-		 
-		 keys = xmlParser.getKeys();
-         
-    //   Get handler for File Editor to edit the entity file  
-         JavaSourceFileEditor entityClassFile = getJavaFileEditor(domain, remoteEntity); 
- 		 
- 	//   Add Imports 
- 		 addImports(entityClassFile, namespace);
-         
-    //   Add Field declaration for OData Connector
-         JavaSourceField odc = new JavaSourceFieldBuilder()
-											.fieldPrefix("private final static")
-											.fieldType("ODataConnectivity")
-											.fieldName(GwUtils.GW_CONNECTION_FIELD_NAME)
-											.fieldValue("new " + namespace + "()")
-											.build();
-
-         entityClassFile.addGlobalField(odc); 
-         
-    //   Add Fields and corresponding getter/setters methods to the Entity Class
-         Map<String, String> keysIncludingId = new HashMap<String, String>();
-         // Include id as a key(type String)
-         keysIncludingId.put("Id", "String");
-         keysIncludingId.putAll(keys);
-         
-         addGatewayFields(keysIncludingId, fields, entityClassFile); 
-
-    //   Add Persistence Methods
-    // Send all the fields (keys plus fields)
-         allFields.putAll(keys);
-         allFields.putAll(fields);
-         addPersistenceMethods(allFields, entityClassFile, remoteEntity, keys);
-         
-         entityClassFile.makeFile();
-         //throw new Exception(entityClassFile.getFileContent());
-   }
+		return xmlParser;
+	}
     
    public void modifyController(final String remoteEntity) throws Exception{
 	
@@ -327,7 +343,7 @@ public class GwOperationsImpl extends GWOperationsUtils implements GwOperations 
 	   //   Get handler for File Editor to edit (and search) the entity file  
        JavaSourceFileEditor entityClassFile = getJavaFileEditor(domain, localClassName); 
 
-	   Map.Entry<String, String> fieldObj = getValidatedField(localClassName, fieldName, entityClassFile);
+	   Map.Entry<String[], String> fieldObj = getValidatedField(localClassName, fieldName, entityClassFile);
        
        if (fieldObj == null)
     	   throw new Exception("The name \"" + fieldName + "\" is not a valid name. Please choose a name from the provided list.");
@@ -343,7 +359,7 @@ public class GwOperationsImpl extends GWOperationsUtils implements GwOperations 
 	//   Get handler for File Editor to edit (and search) the entity file  
        JavaSourceFileEditor entityClassFile = getJavaFileEditor(domain, localClassName); 
 
-	   Map.Entry<String, String> fieldObj = getValidatedField(localClassName, fieldName, entityClassFile);
+	   Map.Entry<String[], String> fieldObj = getValidatedField(localClassName, fieldName, entityClassFile);
        
        if (fieldObj != null)
     	   throw new Exception("The name \"" + fieldName + "\" is a valid name for a remote field. In order to reduce confusions, " +
@@ -356,5 +372,4 @@ public class GwOperationsImpl extends GWOperationsUtils implements GwOperations 
 	   addLocalFieldInPersistenceMethods(entityClassFile, fieldName, processedTypeName);
        entityClassFile.makeFile();
    }
-
 }

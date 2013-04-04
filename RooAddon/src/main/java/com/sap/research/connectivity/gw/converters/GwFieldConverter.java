@@ -34,7 +34,6 @@ import com.sap.research.connectivity.gw.parsers.JavaSourceFileEditor;
 
 @Component
 @Service
-
 public class GwFieldConverter extends GWOperationsUtils implements Converter<GwField> {
 
     private Logger log = Logger.getLogger(getClass().getName());
@@ -94,11 +93,11 @@ public class GwFieldConverter extends GWOperationsUtils implements Converter<GwF
     	}
     	
     	//Retrieve the field list from metadata xml
-    	Map<String, String> fields = getFieldsOfRemoteEntity(entityClassName, nameSpace);
+    	Map<String[], String> fields = getFieldsOfRemoteEntity(entityClassName, nameSpace);
 		
-		for(Map.Entry<String, String> field : fields.entrySet()){
-			if(!includedFieldsInClass.contains(field.getKey()))
-				completions.add(new Completion(field.getKey()));
+		for(Map.Entry<String[], String> field : fields.entrySet()){
+			if(!includedFieldsInClass.contains(field.getKey()[1]))
+				completions.add(new Completion(field.getKey()[0]));
 		}
     	
 		return false;

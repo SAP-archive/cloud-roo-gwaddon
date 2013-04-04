@@ -163,8 +163,8 @@ public class GwCommands implements CommandMarker { // All command types must imp
     		@CliOption(key = "PASSWORD", mandatory = true, help = "Password") String pass,
     		@CliOption(key = "CSRF_MODE", mandatory = false, unspecifiedDefaultValue = "standard", specifiedDefaultValue = "standard", 
 			help = "The Gateway Server Mode for CSRF. Default is standard. For compatibility mode, choose compatibility.") final String csrfMode,
-    		@CliOption(key = "HTTP_PROXYHOST", mandatory = false, help = "http.proxyhost") String http_proxyhost,
-    		@CliOption(key = "HTTP_PROXYPORT", mandatory = false, help = "http.proxyport") String http_proxyport,
+    		@CliOption(key = "HTTP_PROXYHOST", mandatory = false, help = "http.proxyhost", unspecifiedDefaultValue = "") String http_proxyhost,
+    		@CliOption(key = "HTTP_PROXYPORT", mandatory = false, help = "http.proxyport", unspecifiedDefaultValue = "") String http_proxyport,
     		@CliOption(key = "TIMEOUT_CALL", mandatory = false, unspecifiedDefaultValue = "30", specifiedDefaultValue = "30", 
     		help = "The timeout for retrieving the metadata in seconds. Default is 30.") int timeout
     		) {
@@ -194,14 +194,17 @@ public class GwCommands implements CommandMarker { // All command types must imp
     		@CliOption(key = "namespace", optionContext = "connectivity", mandatory = true, help = "OData Endpoint URL") final GwEndpoint endPointName,
     		@CliOption(key = "remoteEntitySet", mandatory = true, help = "OData Entity Set Name") final GwRemoteEntity remoteEntitySet,
     		@CliOption(key = "import_all", mandatory = false, unspecifiedDefaultValue = "true", specifiedDefaultValue = "true", 
-    				help = "Whether to import all fields from the remote entity") final boolean importAll
+    				help = "Whether to import all fields from the remote entity") final boolean importAll,
+    	    @CliOption(key = "import_associations", mandatory = false, unspecifiedDefaultValue = "false", specifiedDefaultValue = "true", 
+    				help = "Whether to import associations of the remote entity. Please note that the associated entities must be created beforehand!") 
+    				final boolean importAssociations    				
     		) {
     	
     	// Create a class with JPA specific annotations
     	try {
 			operations.createEntity(endPointName.getName(), remoteEntitySet.getName());
 	    	// Add fields, getter/setters and persistence methods
-	     	operations.addFieldsAndMethods(endPointName.getName(), remoteEntitySet.getName(), importAll);
+	     	operations.addFieldsMethodsAndRelations(endPointName.getName(), remoteEntitySet.getName(), importAll, importAssociations);
 		} catch (Exception e) {
 			log.severe(e.getMessage());
 		}
