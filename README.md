@@ -1,3 +1,8 @@
+![](https://img.shields.io/badge/STATUS-NOT%20CURRENTLY%20MAINTAINED-red.svg?longCache=true&style=flat)
+
+# Important Notice
+This public repository is read-only and no longer maintained.
+
 SAP NetWeaver Gateway Connectivity Addon for Spring Roo
 =======================================================
 
@@ -171,7 +176,7 @@ In the current version, the addon gives the possibility of defining Roo entititi
 
 Ok, but then you might ask, why do I need to set up persistency first?
 
-Well, since Spring Roo’s generated applications rely on JPA persistency (any entity created in Spring Roo is a JPA-entity), one should issue the persistency setup commands before running any NetWeaver Gateway connectivity commands. Actually this is quite useful if you want to extend the Gateway-imported entities with custom fields or might want to make your own entity associations.
+Well, since Spring RooÂ’s generated applications rely on JPA persistency (any entity created in Spring Roo is a JPA-entity), one should issue the persistency setup commands before running any NetWeaver Gateway connectivity commands. Actually this is quite useful if you want to extend the Gateway-imported entities with custom fields or might want to make your own entity associations.
 
 #### Is there a list of features? ####
 
